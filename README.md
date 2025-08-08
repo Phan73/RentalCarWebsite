@@ -66,8 +66,8 @@ The web app will consist of the following pages:
 
 - **Frontend/Backend IDE**: Visual Studio 2022  
 - **Database**: SQL Server Management Studio 19  
-- **Languages/Frameworks**: *(To be finalized during development)*  
-  Likely: C#, ASP.NET Core MVC, HTML/CSS, JavaScript  
+- **Languages/Frameworks**: 
+  C#, ASP.NET Core MVC, HTML/CSS, JavaScript  
 
 ---
 

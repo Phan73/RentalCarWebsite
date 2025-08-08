@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Memory Game</title>
+  <meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+	<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.slim.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+	<script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+	
+	<link rel="stylesheet" href="./CSS/stylesheet.css">
+  <style>
+   
+
+    #game-container {
+      margin-top: 50px;
+      border: 1px solid #ccc;
+      padding: 20px;
+      text-align: center;
+    }
+
+  </style>
+</head>
+
+<body>
+  <div id="navBar-placeholder">
+  </div>
+  <script>
+    $(function () {
+      $("#navBar-placeholder").load("navBar.html");
+    });
+
+  </script>
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div id="game-container" class="text-center">
+          <h1 class="mb-4">Memory Game</h1>
+          <p class="mb-4">Match the cards to win the game!</p>
+          <canvas id="memoryGameCanvas" width="400" height="400"></canvas>
+          <button id="play-again-btn" class="btn btn-primary mt-4 d-none">Play Again</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('memoryGameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const cardWidth = 80;
+    const cardHeight = 100;
+    const cardSpacing = 10;
+
+    const cards = [
+      { image: 'IMG/card1.png', flipped: false },
+      { image: 'IMG/card2.png', flipped: false },
+      { image: 'IMG/card3.png', flipped: false },
+      { image: 'IMG/card4.png', flipped: false },
+      { image: 'IMG/card1.png', flipped: false },
+      { image: 'IMG/card2.png', flipped: false },
+      { image: 'IMG/card3.png', flipped: false },
+      { image: 'IMG/card4.png', flipped: false },
+   
+    ];
+
+    let flippedCards = [];
+    let matchedPairs = 0;
+
+    // Function to shuffle the cards
+    function shuffleCards() {
+      let currentIndex = cards.length;
+      let temporaryValue;
+      let randomIndex;
+
+      while (currentIndex !== 0) {
+        randomIndex = Math.floor(Math.random() * currentIndex);
+        currentIndex--;
+
+        temporaryValue = cards[currentIndex];
+        cards[currentIndex] = cards[randomIndex];
+        cards[randomIndex] = temporaryValue;
+      }
+    }
+
+    // Function to handle card clicks
+    function handleCardClick(index) {
+      if (flippedCards.length < 2 && !cards[index].flipped) {
+        cards[index].flipped = true;
+        flippedCards.push(index);
+
+        if (flippedCards.length === 2) {
+          setTimeout(checkMatch, 1000);
+        }
+
+        drawCards();
+      }
+    }
+
+    // Function to check if the flipped cards match
+    function checkMatch() {
+      const card1 = flippedCards[0];
+      const card2 = flippedCards[1];
+
+      if (cards[card1].image === cards[card2].image) {
+        // Matched
+        cards[card1].flipped = true;
+        cards[card2].flipped = true;
+        matchedPairs++;
+      } else {
+        // Not matched
+        cards[card1].flipped = false;
+        cards[card2].flipped = false;
+      }
+
+      flippedCards = [];
+
+      // Check if all pairs are matched
+      if (matchedPairs === 4) {
+        alert('Congratulations! You have matched all pairs!');
+      }
+
+      drawCards();
+    }
+
+    // Function to draw the cards on the canvas
+    function drawCards() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 0; i < cards.length; i++) {
+        const cardX = i % 4 * (cardWidth + cardSpacing);
+        const cardY = Math.floor(i / 4) * (cardHeight + cardSpacing);
+
+        if (cards[i].flipped) {
+          // Draw the card image
+          const img = new Image();
+          img.src = cards[i].image;
+          img.onload = function () {
+            ctx.drawImage(img, cardX, cardY, cardWidth, cardHeight);
+          };
+        } else {
+          // Draw the card back
+          ctx.fillStyle = '#999';
+          ctx.fillRect(cardX, cardY, cardWidth, cardHeight);
+        }
+      }
+    }
+
+    shuffleCards();
+    drawCards();
+    function showPlayAgainButton() {
+      const playAgainBtn = document.getElementById('play-again-btn');
+      playAgainBtn.classList.remove('d-none');
+    }
+    const playAgainBtn = document.getElementById('play-again-btn');
+    playAgainBtn.addEventListener('click', function() {
+      shuffleCards();
+    drawCards();
+    });
+
+    canvas.addEventListener('click', function (event) {
+      const rect = canvas.getBoundingClientRect();
+      const clickX = event.clientX - rect.left;
+      const clickY = event.clientY - rect.top;
+
+      for (let i = 0; i < cards.length; i++) {
+        const cardX = i % 4 * (cardWidth + cardSpacing);
+        const cardY = Math.floor(i / 4) * (cardHeight + cardSpacing);
+
+        if (
+          clickX >= cardX &&
+          clickX <= cardX + cardWidth &&
+          clickY >= cardY &&
+          clickY <= cardY + cardHeight
+        ) {
+          handleCardClick(i);
+          break;
+        }
+      }
+    });
+  </script>
+
+</body>
+<footer>
+  <div id="footer-placeholder">
+  </div>
+  <script>
+    $(function () {
+      $("#footer-placeholder").load("footer.html");
+    });
+
+  </script>
+</footer>
+
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Stuff Animal Category</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+  <link rel="stylesheet" href="CSS/stylesheet.css">
+</head>
+
+<body>
+    <div id="nav-placeholder">
+
+	</div>
+
+	
+	<script>
+		$(function () {
+			$("#nav-placeholder").load("navBar.html");
+		});
+		
+	</script>
+  <div class="container">
+    <h1>Stuff Animal Category</h1>
+    <div class="row">
+      <div class="col-md-4">
+        <div class="card">
+          <a href="#" data-toggle="modal" data-target="#itemModal1">
+            <img src="./IMG/stuffbear.jpg" alt="stuff bear" class="card-img-top img-fluid">
+          </a>
+          <div class="card-body">
+            <h3 class="card-title">
+              <a href="#" data-toggle="modal" data-target="#itemModal1">stuff bear</a>
+            </h3>
+            <p class="card-text item-price">$19.99</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <a href="#" data-toggle="modal" data-target="#itemModal2">
+            <img src="./IMG/stufftoy3.jpg" alt="Stuff Kangaroo" class="card-img-top img-fluid">
+          </a>
+          <div class="card-body">
+            <h3 class="card-title">
+              <a href="#" data-toggle="modal" data-target="#itemModal2">Stuff Kangaroo </a>
+            </h3>
+            <p class="card-text item-price">$15.99</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <a href="#" data-toggle="modal" data-target="#itemModal3">
+            <img src="./IMG/stuffdog.jpg" alt="stuff dog" class="card-img-top img-fluid">
+          </a>
+          <div class="card-body">
+            <h3 class="card-title">
+              <a href="#" data-toggle="modal" data-target="#itemModal3">Stuff Dog</a>
+            </h3>
+            <p class="card-text item-price">$15.99</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <a href="#" data-toggle="modal" data-target="#itemModal4">
+            <img src="./IMG/stuffCow.jpg" alt="stuff cow" class="card-img-top img-fluid">
+          </a>
+          <div class="card-body">
+            <h3 class="card-title">
+              <a href="#" data-toggle="modal" data-target="#itemModal4">Stuff Cow</a>
+            </h3>
+            <p class="card-text item-price">$16.99</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="itemModal1" tabindex="-1" role="dialog" aria-labelledby="itemModal1Label"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="itemModal1Label">Stuff Bear</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <img src="./IMG/stuffbear.jpg" alt="Item 1" class="img-fluid">
+          <p>A fluffy brown bear made with high quality fabric , fit for kids to play and cuddle with</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="itemModal2" tabindex="-1" role="dialog" aria-labelledby="itemModal2Label"
+  aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="itemModal2Label">Stuff Kangaroo</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <img src="./IMG/stufftoy3.jpg" alt="Item 1" class="img-fluid">
+        <p>a cute stuff Kangaroo with it mother, perfect for Aussies kids </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="itemModal3" tabindex="-1" role="dialog" aria-labelledby="itemModal3Label"
+  aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="itemModal3Label">Stuff Dog</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <img src="./IMG/stuffdog.jpg" alt="Item 1" class="img-fluid">
+        <p>injured stuff dog, perfect for playing nursing </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="itemModal4" tabindex="-1" role="dialog" aria-labelledby="itemModal4Label"
+  aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="itemModal4Label">Stuff Cow</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <img src="./IMG/stuffCow.jpg" alt="Item 1" class="img-fluid">
+        <p>a wide selection of stuff cow toys </p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+
+</html>

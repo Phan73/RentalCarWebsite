@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Toy Figure Category</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+  <link rel="stylesheet" href="./CSS/stylesheet.css">
+</head>
+
+<body>
+    <div id="nav-placeholder">
+
+	</div>
+
+	
+	<script>
+		$(function () {
+			$("#nav-placeholder").load("navBar.html");
+		});
+		
+	</script>
+  <div class="container">
+    <h1>Toy Figure Category</h1>
+    <div class="row">
+      <div class="col-md-4">
+        <div class="card">
+          <a href="#" data-toggle="modal" data-target="#itemModal1">
+            <img src="./IMG/figure1.jpg" alt="Fastest Man Alive Hero Figure" class="card-img-top img-fluid">
+          </a>
+          <div class="card-body">
+            <h3 class="card-title">
+              <a href="#" data-toggle="modal" data-target="#itemModal1">Fastest Man Alive Hero Figure</a>
+            </h3>
+            <p class="card-text item-price">$19.99</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <a href="#" data-toggle="modal" data-target="#itemModal2">
+            <img src="./IMG/figure2.jpg" alt="Wooden man" class="card-img-top img-fluid">
+          </a>
+          <div class="card-body">
+            <h3 class="card-title">
+              <a href="#" data-toggle="modal" data-target="#itemModal2">Wooden action figure</a>
+            </h3>
+            <p class="card-text item-price">$19.99</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <a href="#" data-toggle="modal" data-target="#itemModal3">
+            <img src="./IMG/figure4.jpeg" alt="Yellow wool doll" class="card-img-top img-fluid">
+          </a>
+          <div class="card-body">
+            <h3 class="card-title">
+              <a href="#" data-toggle="modal" data-target="#itemModal3">Yellow wool doll</a>
+            </h3>
+            <p class="card-text item-price">$19.99</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <a href="#" data-toggle="modal" data-target="#itemModal4">
+            <img src="./IMG/figure3.jpg" alt="Arachnoid hero figure" class="card-img-top img-fluid">
+          </a>
+          <div class="card-body">
+            <h3 class="card-title">
+              <a href="#" data-toggle="modal" data-target="#itemModal4">Arachnoid hero figure</a>
+            </h3>
+            <p class="card-text item-price">$17.99</p>
+          </div>
+        </div>
+      </div>
+    
+    </div>
+  </div>
+
+  <!-- Item Modal 
+  https://www.w3schools.com/bootstrap4/bootstrap_modal.asp-->
+  <div class="modal fade" id="itemModal1" tabindex="-1" role="dialog" aria-labelledby="itemModal1Label"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="itemModal1Label">Item 1</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <img src="./IMG/figure1.jpg" alt="Fastest Man Alive Hero Figure" class="img-fluid">
+          <p>Plastic Toy Hero.<br>
+            100% plastic.<br>
+          </p>
+
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="itemModal2" tabindex="-1" role="dialog" aria-labelledby="itemModal2Label"
+  aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="itemModal2Label">Wooden toy Figure</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <img src="./IMG/figure2.jpg" alt="Item 1" class="img-fluid">
+        <p>Wooden Toys<br>
+        Made of 100% oak wood</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="itemModal3" tabindex="-1" role="dialog" aria-labelledby="itemModal3Label"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="itemModal2Label">Yellow Dolls</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <img src="./IMG/figure4.jpeg" alt="Item 1" class="img-fluid">
+          <p>Yellow doll model after a popular character <br>
+          100% made out of wool!</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="modal fade" id="itemModal4" tabindex="-1" role="dialog" aria-labelledby="itemModal4Label"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="itemModal4Label">Arachnoid Hero Figure</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <img src="./IMG/figure3.jpg" alt="Item 1" class="img-fluid">
+          <p>Plastic Toy figure model after popular character<br>
+          100% made out of plastic</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+</body>
+
+</html>

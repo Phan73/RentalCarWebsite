@@ -1,7 +1,12 @@
 {
   "Version": 1,
   "WorkspaceRootPath": "C:\\Users\\Carlun\\Downloads\\FEWD-Project\\",
-  "Documents": [],
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{62247DFE-767F-4045-8DB6-F48D26E8716F}|FEWD.vcxproj|C:\\Users\\Carlun\\Downloads\\FEWD-Project\\ToyFigure.html||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{62247DFE-767F-4045-8DB6-F48D26E8716F}|FEWD.vcxproj|solutionrelative:ToyFigure.html||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
@@ -9,8 +14,21 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": -1,
+          "SelectedChildIndex": 0,
           "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ToyFigure.html",
+              "DocumentMoniker": "C:\\Users\\Carlun\\Downloads\\FEWD-Project\\ToyFigure.html",
+              "RelativeDocumentMoniker": "ToyFigure.html",
+              "ToolTip": "C:\\Users\\Carlun\\Downloads\\FEWD-Project\\ToyFigure.html",
+              "RelativeToolTip": "ToyFigure.html",
+              "ViewState": "AQIAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001512|",
+              "WhenOpened": "2025-08-15T05:46:15.595Z",
+              "EditorCaption": ""
+            },
             {
               "$type": "Bookmark",
               "Name": "ST:0:0:{0ad07096-bba9-4900-a651-0598d26f6d24}"

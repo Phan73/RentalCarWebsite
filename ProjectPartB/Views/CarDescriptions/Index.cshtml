@@ -1,159 +1,337 @@
-﻿
-@model IPagedList<ProjectPartB.Models.CarDescription>
-@using X.PagedList.Mvc.Core;
-@using X.PagedList;
-@using X.PagedList.Web.Common;
+@model ProjectPartB.Models.ViewModels.VehicleListViewModel
 @{
-    ViewData["Title"] = "Index";
+    ViewData["Title"] = "Vehicle Fleet & Discovery";
 }
 
-<h1>Choose your car!!</h1>
-@{
-    // Check if the user is in the "Administrator" or "Visitor" role
-    bool isUserAdminOrVisitor = User.IsInRole("Administrator") || User.IsInRole("Editor");
-}@if (isUserAdminOrVisitor)
-{
-    <p>
-        <a asp-action="Create">Create New</a>
-    </p>
-}
-<form id="searchForm" action="/CarDescriptions/index" method="get">
-    <p>Search Car Description</p>
-    <input type="text" id="searchString" name="searchString" style="width:190px" autocomplete="off" onkeyup="AjaxRequest(this.value);" />
-    <br />
-    <div id="autoSuggestContainer" style="position:absolute; display:none;z-index:100;"></div>
-    <input type="submit" value="Search" />
+<div class="py-4 bg-white border-bottom mb-4">
+    <div class="container">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+            <div>
+                <span class="text-uppercase fw-bold text-muted small" style="letter-spacing: 0.05em;">New Zealand Touring Fleet</span>
+                <h1 class="h2 fw-bold mb-0">Discover Your Rental Vehicle</h1>
+            </div>
+            @if (User.IsInRole("Administrator") || User.IsInRole("Manager") || User.IsInRole("Editor"))
+            {
+                <a asp-action="Create" class="btn-brand">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Add Vehicle to Fleet
+                </a>
+            }
+        </div>
+    </div>
+</div>
 
-</form>
-@Html.PagedListPager(Model, page => Url.Action("Index",new { Page = page }), new PagedListRenderOptions
-{
-LiElementClasses = new string[] { "page-item" },
-PageClasses = new string[] { "page-link" }
-})
+<div class="container pb-5">
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.First().Description)
-            </th>
-            <th>
-                @*@Html.DisplayNameFor(model => model.First().ProductName)*@
-                <a asp-action="Index" asp-route-sortOrder="@ViewData["NameSortParam"]">@Html.DisplayNameFor(model => model.First().Brand)</a>
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.First().Model)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.First().Color)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.First().RatePerDay)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.First().Available)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.First().Image)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.First().CarTypeName)
-            </th>
-          
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                    @Html.Raw(item.Description)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Brand)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Model)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Color)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.RatePerDay)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Available)
-            </td>
-            <td>
-                @*@Html.DisplayFor(modelItem => item.Image)*@
-                <img src="@Url.Content("~/uploads/"+item.Image)" alt="rental cars" width="160" height="150">
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CarTypeName)
-            </td>
-            
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.CarDescriptionId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.CarDescriptionId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.CarDescriptionId">Delete</a>
-                <a asp-controller="ShoppingCart" asp-action="AddToCart" asp-route-id="@item.CarDescriptionId" class="btn btn-primary">Add To Cart</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
-<script type="text/javascript">
-    function AjaxRequest(searchString) {
-        if (searchString.length < 2) {
-            document.getElementById("autoSuggestContainer").innerHTML = "";
-            return;
-        }
-        //alert ("Testing searchString="+ searchString)
-        var xmlhttp = new XMLHttpRequest();
-        var url = "/CarDescriptions/indexAjax?searchString" + searchString;
-        xmlhttp.open("GET", url, false);
-        xmlhttp.send();
-        document.getElementById("autoSuggestContainer").style.display = "block";
+    <div class="row g-4">
+        <!-- Search & Filter Sidebar -->
+        <div class="col-lg-3">
+            <div class="p-4 rounded-3 bg-white" style="border: 1px solid var(--border-subtle); box-shadow: var(--shadow-sm); position: sticky; top: 90px;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">Filters</h5>
+                    <a asp-action="Index" class="small text-muted text-decoration-none">Reset All</a>
+                </div>
 
-        //need to clear out the container for a fresh auto-suggest list
+                <form id="fleetFilterForm" asp-action="Index" method="get">
+                    <!-- Keyword Search with safe Auto-suggest -->
+                    <div class="mb-3 position-relative">
+                        <label class="apex-form-label" for="searchString">Search Make / Model</label>
+                        <input type="text" class="apex-form-control" id="searchString" name="searchString" value="@Model.Filter.SearchTerm" placeholder="e.g. Toyota, Tesla..." autocomplete="off" />
+                        <div id="suggestBox" class="list-group position-absolute w-100 shadow-lg mt-1" style="display: none; z-index: 1050;"></div>
+                    </div>
 
-        //else the auto-suggest list can keep growing and growing with additional user keyups
+                    <!-- Category -->
+                    <div class="mb-3">
+                        <label class="apex-form-label" for="catFilter">Category</label>
+                        <select class="apex-form-control" id="catFilter" name="categoryId">
+                            <option value="">All Categories</option>
+                            @foreach (var cat in Model.Categories)
+                            {
+                                <option value="@cat.Id" selected="@(Model.Filter.CategoryId == cat.Id)">@cat.Name</option>
+                            }
+                        </select>
+                    </div>
 
-        document.getElementById("autoSuggestContainer").innerHTML = "";
+                    <!-- Transmission -->
+                    <div class="mb-3">
+                        <label class="apex-form-label" for="transFilter">Transmission</label>
+                        <select class="apex-form-control" id="transFilter" name="transmission">
+                            <option value="">Any Transmission</option>
+                            <option value="Automatic" selected="@(Model.Filter.Transmission == "Automatic")">Automatic</option>
+                            <option value="Manual" selected="@(Model.Filter.Transmission == "Manual")">Manual</option>
+                        </select>
+                    </div>
 
+                    <!-- Fuel Type -->
+                    <div class="mb-3">
+                        <label class="apex-form-label" for="fuelFilter">Fuel / Powertrain</label>
+                        <select class="apex-form-control" id="fuelFilter" name="fuelType">
+                            <option value="">Any Fuel Type</option>
+                            <option value="Petrol" selected="@(Model.Filter.FuelType == "Petrol")">Petrol</option>
+                            <option value="Diesel" selected="@(Model.Filter.FuelType == "Diesel")">Diesel</option>
+                            <option value="Hybrid" selected="@(Model.Filter.FuelType == "Hybrid")">Hybrid</option>
+                            <option value="Electric" selected="@(Model.Filter.FuelType == "Electric")">Electric (EV)</option>
+                        </select>
+                    </div>
 
+                    <!-- Minimum Seats -->
+                    <div class="mb-3">
+                        <label class="apex-form-label" for="seatFilter">Min. Seats</label>
+                        <select class="apex-form-control" id="seatFilter" name="minSeats">
+                            <option value="">Any Seating</option>
+                            <option value="5" selected="@(Model.Filter.MinSeats == 5)">5+ Passengers</option>
+                            <option value="7" selected="@(Model.Filter.MinSeats == 7)">7+ Passengers</option>
+                            <option value="8" selected="@(Model.Filter.MinSeats == 8)">8+ Passengers</option>
+                        </select>
+                    </div>
 
-        var messageObject = JSON.parse(xmlhttp.responseText); // receive the respose text
+                    <!-- Sort -->
+                    <div class="mb-4">
+                        <label class="apex-form-label" for="sortFilter">Sort By</label>
+                        <select class="apex-form-control" id="sortFilter" name="sortOrder">
+                            <option value="" selected="@(string.IsNullOrEmpty(Model.Filter.SortBy))">Featured First</option>
+                            <option value="price_asc" selected="@(Model.Filter.SortBy == "price_asc")">Price: Low to High</option>
+                            <option value="price_desc" selected="@(Model.Filter.SortBy == "price_desc")">Price: High to Low</option>
+                            <option value="brand_asc" selected="@(Model.Filter.SortBy == "brand_asc")">Make & Model (A-Z)</option>
+                            <option value="year_desc" selected="@(Model.Filter.SortBy == "year_desc")">Newest Model Year</option>
+                        </select>
+                    </div>
 
+                    <button type="submit" class="btn-brand w-100 py-2">Apply Filters</button>
+                </form>
+            </div>
+        </div>
 
+        <!-- Vehicle Grid & Results -->
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <span class="text-muted small">
+                    Showing <strong>@Model.SearchResult.Vehicles.Count</strong> of <strong>@Model.SearchResult.TotalCount</strong> vehicles
+                </span>
+            </div>
 
-        var autoSuggestions = "";
+            @if (!Model.SearchResult.Vehicles.Any())
+            {
+                <div class="p-5 text-center bg-white rounded-3 border">
+                    <svg width="48" height="48" fill="none" stroke="var(--text-muted)" class="mb-3" viewBox="0 0 24 24" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                    <h4>No vehicles match your criteria</h4>
+                    <p class="text-muted small">Try broadening your search terms or resetting filters to view all available vehicles.</p>
+                    <a asp-action="Index" class="btn-brand mt-2">Reset Filters</a>
+                </div>
+            }
+            else
+            {
+                <div class="row g-4">
+                    @foreach (var car in Model.SearchResult.Vehicles)
+                    {
+                        <div class="col-md-6 col-xl-4">
+                            <div class="vehicle-card">
+                                <div class="vehicle-card-img-wrapper">
+                                    @if (!string.IsNullOrEmpty(car.Image) && (car.Image.StartsWith("http") || car.Image.EndsWith(".jpg") || car.Image.EndsWith(".png") || car.Image.EndsWith(".jfif") || car.Image.EndsWith(".webp")))
+                                    {
+                                        var imgSrc = car.Image.StartsWith("http") ? car.Image : Url.Content("~/uploads/" + car.Image);
+                                        <img src="@imgSrc" alt="@car.Brand @car.Model" class="vehicle-card-img" loading="lazy" />
+                                    }
+                                    else
+                                    {
+                                        <div class="text-center p-3 text-muted">
+                                            <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4M3 13h18M5 17h14a2 2 0 002-2v-3a2 2 0 00-.59-1.41L17 7.17A2 2 0 0015.59 6.5H8.41a2 2 0 00-1.41.67L3.59 10.59A2 2 0 003 12v3a2 2 0 002 2z"></path>
+                                            </svg>
+                                        </div>
+                                    }
+                                    <span class="vehicle-category-badge">@(car.CarType?.Name ?? car.CarTypeName)</span>
+                                    @if (car.Featured)
+                                    {
+                                        <span class="vehicle-featured-badge">Featured</span>
+                                    }
+                                </div>
 
+                                <div class="vehicle-card-body">
+                                    <h3 class="vehicle-card-title">@car.Brand @car.Model</h3>
+                                    <div class="vehicle-card-subtitle">Year @car.Year &bull; @car.Color</div>
 
+                                    <div class="vehicle-specs-grid">
+                                        <div class="spec-chip">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                            </svg>
+                                            <span>@car.Transmission</span>
+                                        </div>
+                                        <div class="spec-chip">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                                            </svg>
+                                            <span>@car.FuelType</span>
+                                        </div>
+                                        <div class="spec-chip">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                                <circle cx="9" cy="7" r="4"></circle>
+                                            </svg>
+                                            <span>@car.Seats Seats</span>
+                                        </div>
+                                        <div class="spec-chip">
+                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                                            </svg>
+                                            <span>@car.Luggage Luggage</span>
+                                        </div>
+                                    </div>
 
-        for (var i = 0; i < messageObject.length; i++) {
+                                    <p class="text-muted small mb-3 text-truncate" style="max-height: 40px;">
+                                        @car.Description
+                                    </p>
 
-            //HTML code generation demo
+                                    <div class="vehicle-pricing-row">
+                                        <div>
+                                            <span class="vehicle-price-val">$@car.RatePerDay.ToString("N2")</span>
+                                            <span class="vehicle-price-period">NZD / day</span>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <a asp-action="Details" asp-route-id="@car.CarDescriptionId" class="btn btn-sm btn-outline-secondary">
+                                                Details
+                                            </a>
+                                            <a asp-controller="Booking" asp-action="Reserve" asp-route-carId="@car.CarDescriptionId" class="btn btn-sm btn-brand">
+                                                Book
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
 
-            //Works together with the ".innerHTML" statement after the end of this "for" block
+                <!-- Pagination -->
+                @if (Model.SearchResult.TotalPages > 1)
+                {
+                    <nav class="mt-5" aria-label="Vehicle catalogue pagination">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item @(Model.SearchResult.HasPreviousPage ? "" : "disabled")">
+                                <a class="page-link" asp-action="Index"
+                                   asp-route-page="@(Model.SearchResult.Page - 1)"
+                                   asp-route-searchString="@Model.Filter.SearchTerm"
+                                   asp-route-categoryId="@Model.Filter.CategoryId"
+                                   asp-route-transmission="@Model.Filter.Transmission"
+                                   asp-route-fuelType="@Model.Filter.FuelType"
+                                   asp-route-minSeats="@Model.Filter.MinSeats"
+                                   asp-route-sortOrder="@Model.Filter.SortBy">
+                                    Previous
+                                </a>
+                            </li>
 
-            autoSuggestions +=
+                            @for (int p = 1; p <= Model.SearchResult.TotalPages; p++)
+                            {
+                                <li class="page-item @(p == Model.SearchResult.Page ? "active" : "")">
+                                    <a class="page-link" asp-action="Index"
+                                       asp-route-page="@p"
+                                       asp-route-searchString="@Model.Filter.SearchTerm"
+                                       asp-route-categoryId="@Model.Filter.CategoryId"
+                                       asp-route-transmission="@Model.Filter.Transmission"
+                                       asp-route-fuelType="@Model.Filter.FuelType"
+                                       asp-route-minSeats="@Model.Filter.MinSeats"
+                                       asp-route-sortOrder="@Model.Filter.SortBy">
+                                        @p
+                                    </a>
+                                </li>
+                            }
 
-                "<input type=\"button\" value=\"" + messageObject[i].Brand + "\" "
+                            <li class="page-item @(Model.SearchResult.HasNextPage ? "" : "disabled")">
+                                <a class="page-link" asp-action="Index"
+                                   asp-route-page="@(Model.SearchResult.Page + 1)"
+                                   asp-route-searchString="@Model.Filter.SearchTerm"
+                                   asp-route-categoryId="@Model.Filter.CategoryId"
+                                   asp-route-transmission="@Model.Filter.Transmission"
+                                   asp-route-fuelType="@Model.Filter.FuelType"
+                                   asp-route-minSeats="@Model.Filter.MinSeats"
+                                   asp-route-sortOrder="@Model.Filter.SortBy">
+                                    Next
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                }
+            }
+        </div>
+    </div>
+</div>
 
-                + "onclick=\"document.getElementById('searchString').value = this.value; document.getElementById('searchForm').submit();\" "
+@section Scripts {
+<script>
+    // Safe, non-blocking asynchronous auto-suggest search
+    const searchInput = document.getElementById('searchString');
+    const suggestBox = document.getElementById('suggestBox');
+    let debounceTimer;
 
-                + "style =\"width: 280px\" />";
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            const query = this.value.trim();
 
-            autoSuggestions += "<br />";
+            if (query.length < 2) {
+                suggestBox.style.display = 'none';
+                suggestBox.innerHTML = '';
+                return;
+            }
 
-        }
+            debounceTimer = setTimeout(async () => {
+                try {
+                    const response = await fetch('/CarDescriptions/IndexAJAX?searchString=' + encodeURIComponent(query));
+                    if (!response.ok) return;
+                    const items = await response.json();
 
-        //place the generated buttons HTML code inside the display div
+                    if (!items || items.length === 0) {
+                        suggestBox.style.display = 'none';
+                        suggestBox.innerHTML = '';
+                        return;
+                    }
 
-        document.getElementById("autoSuggestContainer").innerHTML = autoSuggestions;
+                    suggestBox.innerHTML = '';
+                    items.forEach(item => {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center small';
+                        btn.textContent = item.fullName;
+                        
+                        const badge = document.createElement('span');
+                        badge.className = 'badge bg-light text-dark border';
+                        badge.textContent = '$' + item.rate.toFixed(2) + '/d';
+                        btn.appendChild(badge);
 
+                        btn.addEventListener('click', () => {
+                            searchInput.value = item.fullName;
+                            suggestBox.style.display = 'none';
+                            document.getElementById('fleetFilterForm').submit();
+                        });
 
+                        suggestBox.appendChild(btn);
+                    });
+
+                    suggestBox.style.display = 'block';
+                } catch (e) {
+                    console.error('Auto-suggest error:', e);
+                }
+            }, 250);
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !suggestBox.contains(e.target)) {
+                suggestBox.style.display = 'none';
+            }
+        });
     }
 </script>
-
+}

@@ -1,60 +1,117 @@
-﻿@model ProjectPartB.Models.CarDescription
-
+@model ProjectPartB.Models.CarDescription
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Add New Vehicle to Fleet";
 }
 
-<h1>Create</h1>
+<div class="container py-5">
+    <div class="max-w-2xl mx-auto">
+        <div class="p-4 p-md-5 rounded-3 bg-white border shadow-sm">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <span class="text-uppercase fw-bold text-muted small" style="letter-spacing: 0.05em;">Fleet Operations</span>
+                    <h2 class="fw-bold mb-0">Add Vehicle</h2>
+                </div>
+                <a asp-action="Index" class="btn btn-outline-secondary btn-sm">Cancel</a>
+            </div>
 
-<h4>CarDescription</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create" enctype="multipart/form-data">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="CarTypeName" class="control-label"></label>
-                <select asp-for="CarTypeName" class="form-control" asp-items="ViewBag.CarTypeName"></select>
-            </div>
-            <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
-                <input asp-for="Description" class="form-control" />
-                <span asp-validation-for="Description" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Brand" class="control-label"></label>
-                <input asp-for="Brand" class="form-control" />
-                <span asp-validation-for="Brand" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Model" class="control-label"></label>
-                <input asp-for="Model" class="form-control" />
-                <span asp-validation-for="Model" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Color" class="control-label"></label>
-                <input asp-for="Color" class="form-control" />
-                <span asp-validation-for="Color" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="RatePerDay" class="control-label"></label>
-                <input asp-for="RatePerDay" class="form-control" />
-                <span asp-validation-for="RatePerDay" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <label asp-for="Image" class="control-label"></label>
-                <input asp-for="Image" type="file" accept="image/jpeg,image/png" class="form-control" />
-                <span asp-validation-for="Image" class="text-danger"></span>
-            </div>
-           
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+            <form asp-action="Create" enctype="multipart/form-data" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4"></div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="apex-form-label" asp-for="Brand">Make / Brand *</label>
+                        <input class="apex-form-control" asp-for="Brand" placeholder="e.g. Toyota" required />
+                        <span asp-validation-for="Brand" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="apex-form-label" asp-for="Model">Model *</label>
+                        <input class="apex-form-control" asp-for="Model" placeholder="e.g. RAV4 Hybrid" required />
+                        <span asp-validation-for="Model" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="apex-form-label" asp-for="CarTypeId">Category *</label>
+                        <select class="apex-form-control" asp-for="CarTypeId" asp-items="ViewBag.CarTypeId"></select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="apex-form-label" asp-for="RatePerDay">Daily Rate (NZD) *</label>
+                        <input class="apex-form-control" asp-for="RatePerDay" type="number" step="0.01" min="1" required />
+                        <span asp-validation-for="RatePerDay" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="apex-form-label" asp-for="Transmission">Transmission *</label>
+                        <select class="apex-form-control" asp-for="Transmission">
+                            <option value="Automatic">Automatic</option>
+                            <option value="Manual">Manual</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="apex-form-label" asp-for="FuelType">Fuel / Powertrain *</label>
+                        <select class="apex-form-control" asp-for="FuelType">
+                            <option value="Petrol">Petrol</option>
+                            <option value="Diesel">Diesel</option>
+                            <option value="Hybrid">Hybrid</option>
+                            <option value="Electric">Electric</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="apex-form-label" asp-for="Seats">Seats *</label>
+                        <input class="apex-form-control" asp-for="Seats" type="number" min="2" max="12" value="5" required />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="apex-form-label" asp-for="Luggage">Luggage Capacity *</label>
+                        <input class="apex-form-control" asp-for="Luggage" type="number" min="0" max="10" value="3" required />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="apex-form-label" asp-for="Year">Model Year *</label>
+                        <input class="apex-form-control" asp-for="Year" type="number" min="2000" max="2030" value="@DateTime.Now.Year" required />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="apex-form-label" asp-for="Color">Exterior Color *</label>
+                        <input class="apex-form-control" asp-for="Color" placeholder="e.g. Silver Sky Metallic" required />
+                        <span asp-validation-for="Color" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="apex-form-label" for="imageFile">Vehicle Image (JPG, PNG, WEBP)</label>
+                        <input class="apex-form-control" id="imageFile" name="imageFile" type="file" accept=".jpg,.jpeg,.png,.webp" />
+                    </div>
+
+                    <div class="col-12">
+                        <label class="apex-form-label" asp-for="Description">Vehicle Description *</label>
+                        <textarea class="apex-form-control" asp-for="Description" rows="3" placeholder="Provide vehicle details, features, and driving characteristics..." required></textarea>
+                        <span asp-validation-for="Description" class="text-danger small"></span>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" asp-for="Featured" id="featuredCheck" />
+                            <label class="form-check-label small" for="featuredCheck">Feature this vehicle on the Homepage</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" asp-for="Available" id="availCheck" checked />
+                            <label class="form-check-label small" for="availCheck">Available for immediate booking</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-4 pt-3 border-top">
+                    <button type="submit" class="btn-brand">Save Vehicle to Fleet</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-

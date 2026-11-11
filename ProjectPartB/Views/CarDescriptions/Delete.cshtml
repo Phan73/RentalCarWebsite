@@ -1,75 +1,32 @@
-﻿@model ProjectPartB.Models.CarDescription
-
+@model ProjectPartB.Models.CarDescription
 @{
-    ViewData["Title"] = "Delete";
+    ViewData["Title"] = $"Decommission / Delete — {Model.Brand} {Model.Model}";
 }
 
-<h1>Delete</h1>
+<div class="container py-5">
+    <div class="max-w-xl mx-auto">
+        <div class="p-4 p-md-5 rounded-3 bg-white border shadow-sm">
+            <span class="badge bg-danger mb-2">Fleet Decommission</span>
+            <h3 class="fw-bold mb-1">Remove Vehicle from Active Fleet</h3>
+            <p class="text-secondary small mb-4">
+                Are you sure you want to remove <strong>@Model.Brand @Model.Model</strong>? If this vehicle has active reservation history, it will be safely archived to preserve business records.
+            </p>
 
-<h3>Are you sure you want to delete this?</h3>
-<div>
-    <h4>CarDescription</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Brand)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Brand)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Model)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Model)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Color)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Color)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.RatePerDay)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.RatePerDay)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Available)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Available)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Image)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Image)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CarTypeName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CarTypeName)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CarType)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CarType.Id)
-        </dd>
-    </dl>
-    
-    <form asp-action="Delete">
-        <input type="hidden" asp-for="CarDescriptionId" />
-        <input type="submit" value="Delete" class="btn btn-danger" /> |
-        <a asp-action="Index">Back to List</a>
-    </form>
+            <div class="p-3 rounded bg-light border mb-4 small">
+                <div><strong>Make & Model:</strong> @Model.Brand @Model.Model (@Model.Year)</div>
+                <div><strong>Category:</strong> @(Model.CarType?.Name ?? Model.CarTypeName)</div>
+                <div><strong>Color:</strong> @Model.Color</div>
+                <div><strong>Daily Rate:</strong> $@Model.RatePerDay.ToString("N2") NZD</div>
+            </div>
+
+            <form asp-action="Delete" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="CarDescriptionId" />
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-danger">Confirm Decommission</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>

@@ -1,0 +1,156 @@
+@model IEnumerable<ProjectPartB.Models.CarDescription>
+@{
+    ViewData["Title"] = "Fleet Management — Admin";
+}
+
+<div class="py-4 bg-white border-bottom mb-4">
+    <div class="container-fluid px-lg-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <span class="text-uppercase fw-bold text-muted small" style="letter-spacing: 0.05em;">Vehicle Assets</span>
+                <h1 class="h2 fw-bold mb-0">Fleet Management</h1>
+            </div>
+            <div class="d-flex gap-2">
+                <a asp-controller="CarDescriptions" asp-action="Create" class="btn-brand">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Add Vehicle
+                </a>
+                <a asp-action="Index" class="btn btn-outline-secondary">Dashboard</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid px-lg-4 pb-5">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="p-4 rounded-3 bg-white border shadow-sm">
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead class="table-light small">
+                    <tr>
+                        <th>Vehicle</th>
+                        <th>Category</th>
+                        <th>Powertrain</th>
+                        <th>Capacity</th>
+                        <th>Daily Rate</th>
+                        <th>Status</th>
+                        <th>Maintenance</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="small">
+                    @foreach (var car in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    @if (!string.IsNullOrEmpty(car.Image))
+                                    {
+                                        var imgSrc = car.Image.StartsWith("http") ? car.Image : Url.Content("~/uploads/" + car.Image);
+                                        <img src="@imgSrc" alt="@car.Brand @car.Model" class="rounded border" style="width: 60px; height: 45px; object-fit: cover;" />
+                                    }
+                                    <div>
+                                        <div class="fw-bold fs-6">@car.Brand @car.Model</div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">Year @car.Year &bull; Color: @car.Color</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>@(car.CarType?.Name ?? car.CarTypeName)</td>
+                            <td>@car.Transmission &bull; @car.FuelType</td>
+                            <td>@car.Seats Seats &bull; @car.Luggage Luggage</td>
+                            <td class="fw-bold fs-6">$@car.RatePerDay.ToString("N2") <span class="small text-muted fw-normal">NZD</span></td>
+                            <td>
+                                @if (car.Available == true)
+                                {
+                                    <span class="badge bg-success">Available</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-danger">Unavailable</span>
+                                }
+                            </td>
+                            <td>
+                                @{
+                                    var unresolved = car.MaintenanceRecords?.Count(m => !m.IsResolved) ?? 0;
+                                }
+                                @if (unresolved > 0)
+                                {
+                                    <span class="badge bg-warning text-dark">@unresolved Open Issue(s)</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">All Good</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <form asp-action="ToggleAvailability" method="post" class="d-inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@car.CarDescriptionId" />
+                                        <button type="submit" class="btn btn-sm @(car.Available == true ? "btn-outline-danger" : "btn-outline-success")">
+                                            @(car.Available == true ? "Deactivate" : "Activate")
+                                        </button>
+                                    </form>
+
+                                    <a asp-controller="CarDescriptions" asp-action="Edit" asp-route-id="@car.CarDescriptionId" class="btn btn-sm btn-outline-secondary">
+                                        Edit
+                                    </a>
+
+                                    <button type="button" class="btn btn-sm btn-outline-info" data-bs-toggle="modal" data-bs-target="#maintModal-@car.CarDescriptionId">
+                                        Log Service
+                                    </button>
+                                </div>
+
+                                <!-- Maintenance Modal -->
+                                <div class="modal fade" id="maintModal-@car.CarDescriptionId" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title fw-bold">Log Maintenance — @car.Brand @car.Model</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <form asp-action="AddMaintenance" method="post">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="carId" value="@car.CarDescriptionId" />
+                                                <div class="modal-body text-start">
+                                                    <div class="mb-3">
+                                                        <label class="apex-form-label" for="mDesc-@car.CarDescriptionId">Service Description</label>
+                                                        <input type="text" class="apex-form-control" name="description" id="mDesc-@car.CarDescriptionId" required placeholder="e.g. Brake pad replacement & WOF inspection" />
+                                                    </div>
+                                                    <div class="mb-3">
+                                                        <label class="apex-form-label" for="mCost-@car.CarDescriptionId">Estimated / Incurred Cost (NZD)</label>
+                                                        <input type="number" step="0.01" class="apex-form-control" name="cost" id="mCost-@car.CarDescriptionId" value="0.00" />
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                                                    <button type="submit" class="btn btn-brand btn-sm">Log Record</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

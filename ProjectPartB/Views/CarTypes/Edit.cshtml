@@ -1,34 +1,34 @@
-﻿@model ProjectPartB.Models.CarType
-
+@model ProjectPartB.Models.CarType
 @{
-    ViewData["Title"] = "Edit";
+    ViewData["Title"] = $"Edit Category — {Model.Name}";
 }
 
-<h1>Edit</h1>
+<div class="container py-5">
+    <div class="max-w-xl mx-auto">
+        <div class="p-4 p-md-5 rounded-3 bg-white border shadow-sm">
+            <h3 class="fw-bold mb-3">Edit Category</h3>
+            <form asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Id" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-3"></div>
 
-<h4>CarType</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Edit">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="Id" />
-            <div class="form-group">
-                <label asp-for="Name" class="control-label"></label>
-                <input asp-for="Name" class="form-control" />
-                <span asp-validation-for="Name" class="text-danger"></span>
-            </div>
-            <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
-            </div>
-        </form>
+                <div class="mb-3">
+                    <label class="apex-form-label" asp-for="Name">Category Name *</label>
+                    <input class="apex-form-control" asp-for="Name" required />
+                    <span asp-validation-for="Name" class="text-danger small"></span>
+                </div>
+
+                <div class="mb-4">
+                    <label class="apex-form-label" asp-for="Description">Description</label>
+                    <textarea class="apex-form-control" asp-for="Description" rows="3"></textarea>
+                    <span asp-validation-for="Description" class="text-danger small"></span>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn-brand">Save Changes</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
-
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
-
-@section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-}

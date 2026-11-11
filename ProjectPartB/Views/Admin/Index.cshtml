@@ -1,0 +1,189 @@
+@model ProjectPartB.Models.ViewModels.AdminDashboardViewModel
+@{
+    ViewData["Title"] = "Operations Dashboard — Apex Car Rentals";
+}
+
+<div class="py-4 bg-white border-bottom mb-4">
+    <div class="container-fluid px-lg-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <span class="text-uppercase fw-bold text-muted small" style="letter-spacing: 0.05em;">Fleet Operations Center</span>
+                <h1 class="h2 fw-bold mb-0">Management Overview</h1>
+            </div>
+            <div class="d-flex gap-2">
+                <a asp-action="Bookings" class="btn btn-outline-secondary">Manage Reservations</a>
+                <a asp-action="Fleet" class="btn-brand">Fleet Inventory</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid px-lg-4 pb-5">
+    <!-- Operational Metrics -->
+    <div class="row g-3 mb-4">
+        <div class="col-xl-3 col-sm-6">
+            <div class="metric-card">
+                <div class="metric-icon-box primary">
+                    <svg width="26" height="26" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="metric-val">$@Model.Stats.TotalRevenue.ToString("N2")</div>
+                    <div class="metric-label">Confirmed Revenue (NZD)</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6">
+            <div class="metric-card">
+                <div class="metric-icon-box navy">
+                    <svg width="26" height="26" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="metric-val">@Model.Stats.TotalBookings</div>
+                    <div class="metric-label">Total Reservations</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6">
+            <div class="metric-card">
+                <div class="metric-icon-box success">
+                    <svg width="26" height="26" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="metric-val">@Model.Stats.AvailableVehicles <span class="fs-6 fw-normal text-muted">/ @Model.Stats.TotalVehicles</span></div>
+                    <div class="metric-label">Available Vehicles</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-sm-6">
+            <div class="metric-card">
+                <div class="metric-icon-box" style="background: #fff7ed; color: #ea580c;">
+                    <svg width="26" height="26" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <div class="metric-val">@Model.Stats.CurrentlyRentedVehicles</div>
+                    <div class="metric-label">Vehicles on Road</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Bookings Grid & Fleet Quick Status -->
+    <div class="row g-4">
+        <!-- Recent Bookings Table -->
+        <div class="col-lg-8">
+            <div class="p-4 rounded-3 bg-white border shadow-sm h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">Recent Reservations</h5>
+                    <a asp-action="Bookings" class="small text-teal text-decoration-none">View All Reservations &rarr;</a>
+                </div>
+
+                @if (!Model.RecentBookings.Any())
+                {
+                    <div class="text-center py-5 text-muted small">No reservations on record yet.</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead class="table-light small">
+                                <tr>
+                                    <th>Reference</th>
+                                    <th>Renter</th>
+                                    <th>Vehicle</th>
+                                    <th>Dates</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="small">
+                                @foreach (var b in Model.RecentBookings)
+                                {
+                                    <tr>
+                                        <td>
+                                            <a asp-controller="Booking" asp-action="Confirmation" asp-route-reference="@b.BookingReference" class="fw-bold text-dark font-monospace text-decoration-none">
+                                                @b.BookingReference
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <div class="fw-semibold">@b.CustomerName</div>
+                                            <div class="text-muted" style="font-size: 0.75rem;">@b.CustomerPhone</div>
+                                        </td>
+                                        <td>@b.CarDescription?.Brand @b.CarDescription?.Model</td>
+                                        <td>
+                                            <div>@b.PickupDateTime.ToString("dd MMM") &rarr; @b.ReturnDateTime.ToString("dd MMM yyyy")</div>
+                                            <div class="text-muted" style="font-size: 0.75rem;">@b.RentalDays days</div>
+                                        </td>
+                                        <td class="fw-bold">$@b.TotalAmount.ToString("N2")</td>
+                                        <td>
+                                            @switch (b.Status)
+                                            {
+                                                case ProjectPartB.Models.BookingStatus.Confirmed:
+                                                    <span class="badge badge-status badge-confirmed">Confirmed</span>
+                                                    break;
+                                                case ProjectPartB.Models.BookingStatus.Active:
+                                                    <span class="badge badge-status badge-active">On Road</span>
+                                                    break;
+                                                case ProjectPartB.Models.BookingStatus.Completed:
+                                                    <span class="badge badge-status badge-completed">Returned</span>
+                                                    break;
+                                                case ProjectPartB.Models.BookingStatus.Cancelled:
+                                                    <span class="badge badge-status badge-cancelled">Cancelled</span>
+                                                    break;
+                                                default:
+                                                    <span class="badge badge-status badge-pending">Pending</span>
+                                                    break;
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Fleet Readiness Overview -->
+        <div class="col-lg-4">
+            <div class="p-4 rounded-3 bg-white border shadow-sm h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0">Fleet Readiness</h5>
+                    <a asp-action="Fleet" class="small text-teal text-decoration-none">Manage &rarr;</a>
+                </div>
+
+                <div class="d-flex flex-column gap-3">
+                    @foreach (var car in Model.Vehicles.Take(5))
+                    {
+                        <div class="d-flex justify-content-between align-items-center p-2 rounded bg-light border">
+                            <div class="d-flex align-items-center gap-2">
+                                @if (!string.IsNullOrEmpty(car.Image))
+                                {
+                                    var imgSrc = car.Image.StartsWith("http") ? car.Image : Url.Content("~/uploads/" + car.Image);
+                                    <img src="@imgSrc" alt="@car.Brand" class="rounded" style="width: 40px; height: 32px; object-fit: cover;" />
+                                }
+                                <div>
+                                    <div class="fw-semibold small">@car.Brand @car.Model</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">@car.Transmission &bull; $@car.RatePerDay.ToString("N2")/day</div>
+                                </div>
+                            </div>
+                            <span class="badge @(car.Available == true ? "bg-success" : "bg-danger")">
+                                @(car.Available == true ? "Available" : "Rented/Held")
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

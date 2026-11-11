@@ -1,241 +1,343 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
-using System.Data;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using Newtonsoft.Json;
 using ProjectPartB.Models;
-using X.PagedList;
+using ProjectPartB.Models.ViewModels;
+using ProjectPartB.Services;
 
 namespace ProjectPartB.Controllers
 {
     public class CarDescriptionsController : Controller
     {
         private readonly FS23_Group4_ProjectContext _context;
-        private readonly IWebHostEnvironment _webHostEnviroment;
+        private readonly IFleetService _fleetService;
+        private readonly IPricingService _pricingService;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public CarDescriptionsController(FS23_Group4_ProjectContext context, IWebHostEnvironment webHostEnvironment)
+        private static readonly string[] AllowedExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
+        private const long MaxFileSize = 5 * 1024 * 1024; // 5 MB
+
+        public CarDescriptionsController(
+            FS23_Group4_ProjectContext context,
+            IFleetService fleetService,
+            IPricingService pricingService,
+            IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
-            _webHostEnviroment = webHostEnvironment;
+            _fleetService = fleetService;
+            _pricingService = pricingService;
+            _webHostEnvironment = webHostEnvironment;
         }
 
-
-        //// GET: CarDescriptions
-        //public async Task<IActionResult> Index()
-        //{
-        //    var fS23_Group4_ProjectContext = _context.CarDescriptions.Include(c => c.CarType);
-        //    return View(await fS23_Group4_ProjectContext.ToListAsync());
-        //}
-
-        public IActionResult Index(string searchString, int? page, string sortOrder)
+        // GET: CarDescriptions
+        public async Task<IActionResult> Index(
+            string? searchString,
+            int? categoryId,
+            string? transmission,
+            string? fuelType,
+            int? minSeats,
+            decimal? minPrice,
+            decimal? maxPrice,
+            DateTime? pickupDateTime,
+            DateTime? returnDateTime,
+            int? pickupLocationId,
+            int? returnLocationId,
+            string? sortOrder,
+            int? page)
         {
-            var pageNumber = page ?? 1;
-            ViewData["NameSortParam"] = string.IsNullOrEmpty(sortOrder) ? "name_desc" : "";
-            var carDescription = from e in _context.CarDescriptions select e;
-            if (!string.IsNullOrEmpty(searchString))
+            var filter = new VehicleSearchFilter
             {
-                carDescription = carDescription.Where(s => s.Brand.Contains(searchString));
-            }
-            //sort car by car availability
-            carDescription = carDescription.OrderBy(s => s.Brand);
-            switch (sortOrder)
-            {
-                case "name_desc":
-                    carDescription = carDescription.OrderByDescending(s => s.Brand);
-                    break;
-            }
-            //return View(await carDescription.ToListAsync());
-            return View(carDescription.ToPagedList(pageNumber, 10));
-        }
-        public string IndexAJAX(string searchString)
+                SearchTerm = searchString,
+                CategoryId = categoryId,
+                Transmission = transmission,
+                FuelType = fuelType,
+                MinSeats = minSeats,
+                MinPrice = minPrice,
+                MaxPrice = maxPrice,
+                PickupDateTime = pickupDateTime,
+                ReturnDateTime = returnDateTime,
+                PickupLocationId = pickupLocationId,
+                ReturnLocationId = returnLocationId,
+                SortBy = sortOrder,
+                Page = page ?? 1,
+                PageSize = 9
+            };
 
+            var searchResult = await _fleetService.SearchVehiclesAsync(filter);
+            var categories = await _fleetService.GetActiveCategoriesAsync();
+            var locations = await _fleetService.GetAllLocationsAsync();
+
+            var viewModel = new VehicleListViewModel
+            {
+                SearchResult = searchResult,
+                Categories = categories,
+                Locations = locations,
+                Filter = filter
+            };
+
+            return View(viewModel);
+        }
+
+        // Non-blocking AJAX auto-suggest endpoint
+        [HttpGet]
+        public async Task<IActionResult> IndexAJAX(string? searchString)
         {
+            if (string.IsNullOrWhiteSpace(searchString) || searchString.Length < 2)
+            {
+                return Json(Array.Empty<object>());
+            }
 
-            string sql = "SELECT * FROM CarDescription WHERE Brand LIKE @p0";
+            var term = searchString.Trim().ToLower();
+            var suggestions = await _context.CarDescriptions
+                .Where(c => (c.Brand != null && c.Brand.ToLower().Contains(term))
+                         || (c.Model != null && c.Model.ToLower().Contains(term)))
+                .Take(6)
+                .Select(c => new
+                {
+                    id = c.CarDescriptionId,
+                    brand = c.Brand,
+                    model = c.Model,
+                    fullName = c.Brand + " " + c.Model,
+                    rate = c.RatePerDay
+                })
+                .ToListAsync();
 
-            string wrapString = "%" + searchString + "%";
-
-            List<CarDescription> carDescriptions = _context.CarDescriptions.FromSqlRaw(sql, wrapString).ToList();
-
-            string jason = JsonConvert.SerializeObject(carDescriptions);
-
-            return jason;
-
+            return Json(suggestions);
         }
+
         // GET: CarDescriptions/Details/5
-        public async Task<IActionResult> Details(int? id)
+        public async Task<IActionResult> Details(int? id, DateTime? pickupDateTime = null, DateTime? returnDateTime = null)
         {
-            if (id == null || _context.CarDescriptions == null)
+            if (id == null)
             {
                 return NotFound();
             }
 
-            var carDescription = await _context.CarDescriptions
-                .Include(c => c.CarType)
-                .FirstOrDefaultAsync(m => m.CarDescriptionId == id);
-            if (carDescription == null)
+            var vehicle = await _fleetService.GetVehicleDetailsAsync(id.Value);
+            if (vehicle == null)
             {
                 return NotFound();
             }
 
-            return View(carDescription);
+            var pDate = pickupDateTime ?? DateTime.Now.Date.AddDays(1).AddHours(10);
+            var rDate = returnDateTime ?? DateTime.Now.Date.AddDays(5).AddHours(10);
+            var pricing = _pricingService.CalculateBookingPrice(vehicle.RatePerDay, pDate, rDate);
+            var locations = await _fleetService.GetAllLocationsAsync();
+
+            var viewModel = new VehicleDetailViewModel
+            {
+                Vehicle = vehicle,
+                Locations = locations,
+                DefaultPickupDate = pDate,
+                DefaultReturnDate = rDate,
+                EstimatedPricing = pricing
+            };
+
+            return View(viewModel);
         }
-        [Authorize(Roles = "Administrator,Editor")]
+
         // GET: CarDescriptions/Create
-        public IActionResult Create()
+        [Authorize(Roles = "Administrator,Manager,Editor")]
+        public async Task<IActionResult> Create()
         {
-            ViewData["CarTypeName"] = new SelectList(_context.CarTypes, "Name", "Name");
+            var categories = await _fleetService.GetActiveCategoriesAsync();
+            ViewData["CarTypeId"] = new SelectList(categories, "Id", "Name");
             return View();
         }
-        [Authorize(Roles = "Administrator,Editor")]
+
         // POST: CarDescriptions/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("CarDescriptionId,CarTypeId,Description,Brand,Model,Color,RatePerDay,Available,Image,CarTypeName")] CarDescription carDescription, IFormFile image)
+        [Authorize(Roles = "Administrator,Manager,Editor")]
+        public async Task<IActionResult> Create(CarDescription carDescription, IFormFile? imageFile)
         {
+            var categories = await _fleetService.GetActiveCategoriesAsync();
+            var selectedCategory = categories.FirstOrDefault(c => c.Id == carDescription.CarTypeId);
+            if (selectedCategory != null)
+            {
+                carDescription.CarTypeName = selectedCategory.Name;
+            }
+
+            // Secure File Upload Validation
+            if (imageFile != null && imageFile.Length > 0)
+            {
+                if (imageFile.Length > MaxFileSize)
+                {
+                    ModelState.AddModelError("Image", "Vehicle image must be under 5 MB.");
+                }
+
+                var ext = Path.GetExtension(imageFile.FileName).ToLowerInvariant();
+                if (!AllowedExtensions.Contains(ext))
+                {
+                    ModelState.AddModelError("Image", "Only .jpg, .jpeg, .png, and .webp images are permitted.");
+                }
+
+                if (ModelState.IsValid)
+                {
+                    var uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
+                    if (!Directory.Exists(uploadsDir))
+                    {
+                        Directory.CreateDirectory(uploadsDir);
+                    }
+
+                    var uniqueFileName = $"{Guid.NewGuid():N}{ext}";
+                    var filePath = Path.Combine(uploadsDir, uniqueFileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await imageFile.CopyToAsync(stream);
+                    }
+
+                    carDescription.Image = uniqueFileName;
+                }
+            }
+
             if (ModelState.IsValid)
             {
-                if (image != null)
-                {
-                    string uploadFolder = Path.Combine(_webHostEnviroment.WebRootPath, "uploads");
-                    string uniqueName = Guid.NewGuid().ToString() + "_" + image.FileName;
-                    string filePath = Path.Combine(uploadFolder, uniqueName);
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await image.CopyToAsync(fileStream);
-
-                    }
-                    carDescription.Image = uniqueName;
-                }
-                _context.Add(carDescription);
+                _context.CarDescriptions.Add(carDescription);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            ViewData["CarTypeName"] = new SelectList(_context.CarTypes, "Name", "Name", carDescription.CarTypeName);
+
+            ViewData["CarTypeId"] = new SelectList(categories, "Id", "Name", carDescription.CarTypeId);
             return View(carDescription);
         }
 
         // GET: CarDescriptions/Edit/5
-        [Authorize(Roles = "Administrator,Editor")]
+        [Authorize(Roles = "Administrator,Manager,Editor")]
         public async Task<IActionResult> Edit(int? id)
         {
-            if (id == null || _context.CarDescriptions == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
-            var carDescription = await _context.CarDescriptions.FindAsync(id);
-            if (carDescription == null)
-            {
-                return NotFound();
-            }
-            ViewData["CarTypeName"] = new SelectList(_context.CarTypes, "Name", "Name", carDescription.CarTypeName);
+            var carDescription = await _context.CarDescriptions.FindAsync(id.Value);
+            if (carDescription == null) return NotFound();
+
+            var categories = await _fleetService.GetActiveCategoriesAsync();
+            ViewData["CarTypeId"] = new SelectList(categories, "Id", "Name", carDescription.CarTypeId);
             return View(carDescription);
         }
-        [Authorize(Roles = "Administrator,Editor")]
+
         // POST: CarDescriptions/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("CarDescriptionId,CarTypeId,Description,Brand,Model,Color,RatePerDay,Available,Image,CarTypeName")] CarDescription carDescription, IFormFile image)
+        [Authorize(Roles = "Administrator,Manager,Editor")]
+        public async Task<IActionResult> Edit(int id, CarDescription carDescription, IFormFile? imageFile)
         {
-            if (id != carDescription.CarDescriptionId)
+            if (id != carDescription.CarDescriptionId) return NotFound();
+
+            var categories = await _fleetService.GetActiveCategoriesAsync();
+            var selectedCategory = categories.FirstOrDefault(c => c.Id == carDescription.CarTypeId);
+            if (selectedCategory != null)
             {
-                return NotFound();
+                carDescription.CarTypeName = selectedCategory.Name;
+            }
+
+            // Secure File Upload Validation
+            if (imageFile != null && imageFile.Length > 0)
+            {
+                if (imageFile.Length > MaxFileSize)
+                {
+                    ModelState.AddModelError("Image", "Vehicle image must be under 5 MB.");
+                }
+
+                var ext = Path.GetExtension(imageFile.FileName).ToLowerInvariant();
+                if (!AllowedExtensions.Contains(ext))
+                {
+                    ModelState.AddModelError("Image", "Only .jpg, .jpeg, .png, and .webp images are permitted.");
+                }
+
+                if (ModelState.IsValid)
+                {
+                    var uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
+                    if (!Directory.Exists(uploadsDir))
+                    {
+                        Directory.CreateDirectory(uploadsDir);
+                    }
+
+                    var uniqueFileName = $"{Guid.NewGuid():N}{ext}";
+                    var filePath = Path.Combine(uploadsDir, uniqueFileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await imageFile.CopyToAsync(stream);
+                    }
+
+                    carDescription.Image = uniqueFileName;
+                }
             }
 
             if (ModelState.IsValid)
             {
-                if (image != null)
-                {
-                    string uploadFolder = Path.Combine(_webHostEnviroment.WebRootPath, "uploads");
-                    string uniqueName = Guid.NewGuid().ToString() + "_" + image.FileName;
-                    string filePath = Path.Combine(uploadFolder, uniqueName);
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await image.CopyToAsync(fileStream);
-                    }
-                    carDescription.Image = uniqueName;
-                }
-
                 try
                 {
                     _context.Update(carDescription);
                     await _context.SaveChangesAsync();
+                    return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!CarDescriptionExists(carDescription.CarDescriptionId))
+                    if (!await _context.CarDescriptions.AnyAsync(e => e.CarDescriptionId == carDescription.CarDescriptionId))
                     {
                         return NotFound();
                     }
-                    else
-                    {
-                        throw;
-                    }
+                    throw;
                 }
-
-                return RedirectToAction(nameof(Index));
             }
-            ViewData["CarTypeName"] = new SelectList(_context.CarTypes, "Name", "Name", carDescription.CarTypeName);
+
+            ViewData["CarTypeId"] = new SelectList(categories, "Id", "Name", carDescription.CarTypeId);
             return View(carDescription);
         }
-
 
         // GET: CarDescriptions/Delete/5
         [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> Delete(int? id)
         {
-            if (id == null || _context.CarDescriptions == null)
-            {
-                return NotFound();
-            }
+            if (id == null) return NotFound();
 
             var carDescription = await _context.CarDescriptions
                 .Include(c => c.CarType)
                 .FirstOrDefaultAsync(m => m.CarDescriptionId == id);
-            if (carDescription == null)
-            {
-                return NotFound();
-            }
+
+            if (carDescription == null) return NotFound();
 
             return View(carDescription);
         }
-        [Authorize(Roles = "Administrator")]
+
         // POST: CarDescriptions/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrator")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            if (_context.CarDescriptions == null)
-            {
-                return Problem("Entity set 'FS23_Group4_ProjectContext.CarDescriptions'  is null.");
-            }
             var carDescription = await _context.CarDescriptions.FindAsync(id);
             if (carDescription != null)
             {
-                _context.CarDescriptions.Remove(carDescription);
+                // Soft archive or check for active bookings
+                var hasActiveBookings = await _context.Bookings
+                    .AnyAsync(b => b.CarDescriptionId == id && b.Status != BookingStatus.Cancelled && b.Status != BookingStatus.Completed);
+
+                if (hasActiveBookings)
+                {
+                    TempData["ErrorMessage"] = "Cannot delete vehicle with active or upcoming reservations. Marked as unavailable instead.";
+                    carDescription.Available = false;
+                }
+                else
+                {
+                    _context.CarDescriptions.Remove(carDescription);
+                }
+
+                await _context.SaveChangesAsync();
             }
 
-            await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
-
-        private bool CarDescriptionExists(int id)
-        {
-            return (_context.CarDescriptions?.Any(e => e.CarDescriptionId == id)).GetValueOrDefault();
-        }
-       
-
     }
 }

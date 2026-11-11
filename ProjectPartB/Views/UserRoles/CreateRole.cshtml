@@ -1,19 +1,27 @@
-﻿@using Microsoft.AspNetCore.Identity
-@model IdentityRole
+@model ProjectPartB.Models.CreateRoleViewModel
+@{
+    ViewData["Title"] = "Create New Role";
+}
 
-<div class="row">
-    <div class="col-md-4">
-        <form method="post">
-            <h2>Create Role</h2>
-            <hr />
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-floating">
-                <input asp-for="Name" class="form-control" aria-required="true" />
-                <label asp-for="Name"></label>
-                <span asp-validation-for="Name" class="text-danger"></span>
-            </div>
-            <br />
-            <button type="submit" class="btn btn-primary">Save</button>
-        </form>
+<div class="container py-5">
+    <div class="max-w-xl mx-auto">
+        <div class="p-4 rounded-3 bg-white border shadow-sm">
+            <h3 class="fw-bold mb-3">Create System Role</h3>
+            <form asp-action="CreateRole" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-3"></div>
+
+                <div class="mb-4">
+                    <label class="apex-form-label" asp-for="RoleName">Role Name</label>
+                    <input class="apex-form-control" asp-for="RoleName" required placeholder="e.g. Inspector" />
+                    <span asp-validation-for="RoleName" class="text-danger small"></span>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn-brand">Create Role</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
     </div>
 </div>

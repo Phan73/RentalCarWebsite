@@ -1,0 +1,61 @@
+@model IEnumerable<ProjectPartB.Models.Location>
+@{
+    ViewData["Title"] = "Branch Locations & Customer Care";
+}
+
+<section class="py-5 bg-white border-bottom">
+    <div class="container">
+        <span class="text-uppercase fw-bold text-muted small" style="letter-spacing: 0.05em;">Nationwide Network</span>
+        <h1 class="display-5 fw-bold mb-2">Branches & Customer Care</h1>
+        <p class="text-secondary lead">Convenient airport terminals and city center depots across New Zealand.</p>
+    </div>
+</section>
+
+<div class="container py-5">
+    <div class="row g-5">
+        <div class="col-lg-7">
+            <h3 class="fw-bold mb-4">Our Branch Depots</h3>
+            <div class="d-flex flex-column gap-3">
+                @foreach (var loc in Model)
+                {
+                    <div class="p-4 rounded-3 bg-white" style="border: 1px solid var(--border-subtle); box-shadow: var(--shadow-xs);">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h5 class="fw-bold mb-1">@loc.Name</h5>
+                                <p class="text-secondary small mb-2">@loc.Address, @loc.City</p>
+                                <div class="small text-muted">
+                                    <svg width="16" height="16" fill="currentColor" class="me-1" viewBox="0 0 20 20">
+                                        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path>
+                                    </svg>
+                                    @loc.Phone
+                                </div>
+                            </div>
+                            <span class="badge badge-status badge-confirmed">Open Today</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="p-4 rounded-3 bg-white" style="border: 1px solid var(--border-subtle); box-shadow: var(--shadow-sm);">
+                <h4 class="fw-bold mb-3">Send an Inquiry</h4>
+                <form onsubmit="event.preventDefault(); alert('Thank you for contacting Apex Car Rentals. A customer service specialist will reply within 2 hours.'); this.reset();">
+                    <div class="mb-3">
+                        <label class="apex-form-label" for="cName">Your Name</label>
+                        <input type="text" class="apex-form-control" id="cName" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="apex-form-label" for="cEmail">Email Address</label>
+                        <input type="email" class="apex-form-control" id="cEmail" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="apex-form-label" for="cMsg">Message</label>
+                        <textarea class="apex-form-control" id="cMsg" rows="4" required placeholder="How can our customer team help you?"></textarea>
+                    </div>
+                    <button type="submit" class="btn-brand w-100 py-2">Submit Message</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

@@ -60,26 +60,41 @@ if (!string.IsNullOrEmpty(port))
 // Configuration & Connection Strings
 var configuration = builder.Configuration;
 var defaultConn = configuration.GetConnectionString("DefaultConnection");
-bool useSqlite = configuration.GetValue<bool>("UseSqlite") ||
-                 (defaultConn != null && defaultConn.Contains(".db", StringComparison.OrdinalIgnoreCase)) ||
-                 string.IsNullOrEmpty(defaultConn);
+var postgresConn = ResolvePostgresConnectionString(configuration);
 
-if (useSqlite)
+if (!string.IsNullOrEmpty(postgresConn))
 {
-    var sqliteConn = configuration.GetConnectionString("SqliteConnection") 
-                     ?? (defaultConn != null && defaultConn.Contains(".db", StringComparison.OrdinalIgnoreCase) ? defaultConn : null)
-                     ?? "Data Source=RentalCarWebsite.db";
+    Console.WriteLine("[Database] Configured for PostgreSQL (Cloud Database).");
     builder.Services.AddDbContext<CustomIdentityContext>(options =>
-        options.UseSqlite(sqliteConn));
+        options.UseNpgsql(postgresConn, npgsqlOptions => npgsqlOptions.EnableRetryOnFailure()));
     builder.Services.AddDbContext<FS23_Group4_ProjectContext>(options =>
-        options.UseSqlite(sqliteConn));
+        options.UseNpgsql(postgresConn, npgsqlOptions => npgsqlOptions.EnableRetryOnFailure()));
 }
 else
 {
-    builder.Services.AddDbContext<CustomIdentityContext>(options =>
-        options.UseSqlServer(defaultConn, sqlOptions => sqlOptions.EnableRetryOnFailure()));
-    builder.Services.AddDbContext<FS23_Group4_ProjectContext>(options =>
-        options.UseSqlServer(defaultConn, sqlOptions => sqlOptions.EnableRetryOnFailure()));
+    bool useSqlite = configuration.GetValue<bool>("UseSqlite") ||
+                     (defaultConn != null && defaultConn.Contains(".db", StringComparison.OrdinalIgnoreCase)) ||
+                     string.IsNullOrEmpty(defaultConn);
+
+    if (useSqlite)
+    {
+        Console.WriteLine("[Database] Configured for SQLite.");
+        var sqliteConn = configuration.GetConnectionString("SqliteConnection") 
+                         ?? (defaultConn != null && defaultConn.Contains(".db", StringComparison.OrdinalIgnoreCase) ? defaultConn : null)
+                         ?? "Data Source=RentalCarWebsite.db";
+        builder.Services.AddDbContext<CustomIdentityContext>(options =>
+            options.UseSqlite(sqliteConn));
+        builder.Services.AddDbContext<FS23_Group4_ProjectContext>(options =>
+            options.UseSqlite(sqliteConn));
+    }
+    else
+    {
+        Console.WriteLine("[Database] Configured for SQL Server.");
+        builder.Services.AddDbContext<CustomIdentityContext>(options =>
+            options.UseSqlServer(defaultConn, sqlOptions => sqlOptions.EnableRetryOnFailure()));
+        builder.Services.AddDbContext<FS23_Group4_ProjectContext>(options =>
+            options.UseSqlServer(defaultConn, sqlOptions => sqlOptions.EnableRetryOnFailure()));
+    }
 }
 
 // ASP.NET Core Identity
@@ -230,3 +245,62 @@ app.MapControllerRoute(
 app.MapRazorPages();
 
 app.Run();
+
+static string? ResolvePostgresConnectionString(IConfiguration configuration)
+{
+    var rawUrl = configuration.GetConnectionString("PostgreSqlConnection")
+                 ?? configuration.GetConnectionString("PostgresConnection")
+                 ?? Environment.GetEnvironmentVariable("POSTGRES_URL")
+                 ?? Environment.GetEnvironmentVariable("DATABASE_URL")
+                 ?? Environment.GetEnvironmentVariable("POSTGRES_PRISMA_URL");
+
+    if (!string.IsNullOrEmpty(rawUrl))
+    {
+        return FormatNpgsqlConnectionString(rawUrl);
+    }
+
+    var host = Environment.GetEnvironmentVariable("PGHOST") ?? Environment.GetEnvironmentVariable("POSTGRES_HOST");
+    var db = Environment.GetEnvironmentVariable("PGDATABASE") ?? Environment.GetEnvironmentVariable("POSTGRES_DATABASE");
+    var user = Environment.GetEnvironmentVariable("PGUSER") ?? Environment.GetEnvironmentVariable("POSTGRES_USER");
+    var pass = Environment.GetEnvironmentVariable("PGPASSWORD") ?? Environment.GetEnvironmentVariable("POSTGRES_PASSWORD");
+
+    if (!string.IsNullOrEmpty(host) && !string.IsNullOrEmpty(db) && !string.IsNullOrEmpty(user))
+    {
+        var npgBuilder = new Npgsql.NpgsqlConnectionStringBuilder
+        {
+            Host = host,
+            Database = db,
+            Username = user,
+            Password = pass ?? string.Empty,
+            SslMode = Npgsql.SslMode.Require,
+            Pooling = true,
+            Timeout = 15
+        };
+        return npgBuilder.ConnectionString;
+    }
+
+    return null;
+}
+
+static string FormatNpgsqlConnectionString(string raw)
+{
+    if (raw.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) ||
+        raw.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+    {
+        var uri = new Uri(raw);
+        var userInfo = uri.UserInfo.Split(':');
+        var npgBuilder = new Npgsql.NpgsqlConnectionStringBuilder
+        {
+            Host = uri.Host,
+            Port = uri.Port > 0 ? uri.Port : 5432,
+            Database = uri.AbsolutePath.TrimStart('/'),
+            Username = userInfo.Length > 0 ? Uri.UnescapeDataString(userInfo[0]) : null,
+            Password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : null,
+            SslMode = Npgsql.SslMode.Require,
+            Pooling = true,
+            Timeout = 15
+        };
+        return npgBuilder.ConnectionString;
+    }
+    return raw;
+}

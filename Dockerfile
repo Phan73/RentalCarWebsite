@@ -19,9 +19,7 @@ COPY --from=build /app/publish .
 # Environment Configuration for Vercel Container Runtime
 ENV PORT=8080
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV UseSqlite=true
 ENV ConnectionStrings__SqliteConnection="Data Source=/tmp/RentalCarWebsite.db"
-ENV ConnectionStrings__DefaultConnection="Data Source=/tmp/RentalCarWebsite.db"
 
 EXPOSE 8080
 

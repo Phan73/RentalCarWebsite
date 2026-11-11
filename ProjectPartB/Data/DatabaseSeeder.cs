@@ -32,7 +32,8 @@ namespace ProjectPartB.Data
             bool identityTablesExist = false;
             try
             {
-                identityTablesExist = await identityContext.Roles.AnyAsync() || true;
+                _ = await identityContext.Roles.AnyAsync();
+                identityTablesExist = true;
             }
             catch
             {
@@ -56,7 +57,8 @@ namespace ProjectPartB.Data
             bool projectTablesExist = false;
             try
             {
-                projectTablesExist = await projectContext.CarDescriptions.AnyAsync() || true;
+                _ = await projectContext.CarDescriptions.AnyAsync();
+                projectTablesExist = true;
             }
             catch
             {
@@ -431,7 +433,8 @@ namespace ProjectPartB.Data
         private static async Task ExecuteScriptSafelyAsync(DatabaseFacade database, string script)
         {
             var isSqlite = database.IsSqlite();
-            if (isSqlite)
+            var isPostgres = database.ProviderName?.Contains("Npgsql", StringComparison.OrdinalIgnoreCase) == true;
+            if (isSqlite || isPostgres)
             {
                 script = script.Replace("CREATE TABLE ", "CREATE TABLE IF NOT EXISTS ");
                 script = script.Replace("CREATE UNIQUE INDEX ", "CREATE UNIQUE INDEX IF NOT EXISTS ");

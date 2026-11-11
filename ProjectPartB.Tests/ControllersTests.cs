@@ -8,10 +8,12 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
 using ProjectPartB.Areas.Identity.Data;
 using ProjectPartB.Controllers;
+using ProjectPartB.Data;
 using ProjectPartB.Models;
 using ProjectPartB.Models.ViewModels;
 using ProjectPartB.Services;
@@ -365,6 +367,80 @@ namespace ProjectPartB.Tests
             Assert.NotNull(updated);
             Assert.Equal("A4 Avant Quattro", updated.Model);
             Assert.Equal(originalImage, updated.Image); // Preserved!
+        }
+
+        [Fact]
+        public async Task Npgsql_CanConnectToNeonPostgres()
+        {
+            var host = "ep-lively-truth-a7r3b1ao-pooler.ap-southeast-2.aws.neon.tech";
+            var user = "neondb_owner";
+            var pass = "npg_XDQWtP9k8gJz";
+            var db = "neondb";
+
+            var connStr = new Npgsql.NpgsqlConnectionStringBuilder
+            {
+                Host = host,
+                Database = db,
+                Username = user,
+                Password = pass,
+                SslMode = Npgsql.SslMode.Require,
+                Pooling = true,
+                Timeout = 15
+            }.ConnectionString;
+
+            using var conn = new Npgsql.NpgsqlConnection(connStr);
+            await conn.OpenAsync();
+            using var cmd = new Npgsql.NpgsqlCommand("SELECT 1", conn);
+            var result = await cmd.ExecuteScalarAsync();
+            Assert.Equal(1, Convert.ToInt32(result));
+        }
+
+        [Fact]
+        public async Task Npgsql_CanInitializeAndSeedNeonPostgres()
+        {
+            var host = "ep-lively-truth-a7r3b1ao-pooler.ap-southeast-2.aws.neon.tech";
+            var user = "neondb_owner";
+            var pass = "npg_XDQWtP9k8gJz";
+            var db = "neondb";
+
+            var connStr = new Npgsql.NpgsqlConnectionStringBuilder
+            {
+                Host = host,
+                Database = db,
+                Username = user,
+                Password = pass,
+                SslMode = Npgsql.SslMode.Require,
+                Pooling = true,
+                Timeout = 20
+            }.ConnectionString;
+
+            var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
+            services.AddLogging();
+            services.AddDbContext<CustomIdentityContext>(options =>
+                options.UseNpgsql(connStr));
+            services.AddDbContext<FS23_Group4_ProjectContext>(options =>
+                options.UseNpgsql(connStr));
+
+            services.AddIdentity<WebUser, IdentityRole>(options =>
+            {
+                options.SignIn.RequireConfirmedAccount = false;
+            })
+            .AddEntityFrameworkStores<CustomIdentityContext>();
+
+            var sp = services.BuildServiceProvider();
+            using var scope = sp.CreateScope();
+            var identityCtx = scope.ServiceProvider.GetRequiredService<CustomIdentityContext>();
+            var projectCtx = scope.ServiceProvider.GetRequiredService<FS23_Group4_ProjectContext>();
+            var roleMgr = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            var userMgr = scope.ServiceProvider.GetRequiredService<UserManager<WebUser>>();
+
+            await DatabaseSeeder.SeedAsync(projectCtx, identityCtx, roleMgr, userMgr);
+
+            var carCount = await projectCtx.CarDescriptions.CountAsync();
+            Assert.True(carCount >= 5);
+
+            var roles = await roleMgr.Roles.ToListAsync();
+            Assert.Contains(roles, r => r.Name == "Administrator");
         }
     }
 }

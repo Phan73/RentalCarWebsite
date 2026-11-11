@@ -1,72 +1,195 @@
-﻿@model ProjectPartB.Models.CarDescription
-
+@model ProjectPartB.Models.ViewModels.VehicleDetailViewModel
 @{
-    ViewData["Title"] = "Details";
+    ViewData["Title"] = $"{Model.Vehicle.Brand} {Model.Vehicle.Model} — Specifications & Booking";
+    var car = Model.Vehicle;
 }
 
-<h1>Details</h1>
-
-<div>
-    <h4>CarDescription</h4>
-    <hr />
-    <dl class="row">
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Description)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Description)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Brand)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Brand)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Model)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Model)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Color)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Color)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.RatePerDay)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.RatePerDay)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Available)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.Available)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Image)
-        </dt>
-        <dd class = "col-sm-10">
-            <img src="@Url.Content("~/uploads/"+ Model.Image)" alt="rental cars" width="160" height="150">
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CarTypeName)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CarTypeName)
-        </dd>
-        <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CarType)
-        </dt>
-        <dd class = "col-sm-10">
-            @Html.DisplayFor(model => model.CarType.Name)
-        </dd>
-    </dl>
+<div class="py-4 bg-white border-bottom mb-4">
+    <div class="container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb small mb-2">
+                <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Home</a></li>
+                <li class="breadcrumb-item"><a asp-action="Index">Fleet</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@car.Brand @car.Model</li>
+            </ol>
+        </nav>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h1 class="h2 fw-bold mb-1">@car.Brand @car.Model</h1>
+                <div class="text-muted small">
+                    Year @car.Year &bull; @(car.CarType?.Name ?? car.CarTypeName) &bull; Color: @car.Color
+                </div>
+            </div>
+            <div class="text-end">
+                <div class="h3 fw-bold text-dark mb-0">$@car.RatePerDay.ToString("N2") <span class="small text-muted fw-normal">NZD / day</span></div>
+                <span class="badge badge-status badge-confirmed">Available for Reservation</span>
+            </div>
+        </div>
+    </div>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.CarDescriptionId">Edit</a> |
-    <a asp-action="Index">Back to List</a>
+
+<div class="container pb-5">
+    <div class="row g-5">
+        <!-- Vehicle Media & Specifications -->
+        <div class="col-lg-7">
+            <!-- Large Image Presentation -->
+            <div class="rounded-3 overflow-hidden border mb-4" style="background: #f1f5f9; max-height: 420px; display: flex; align-items: center; justify-content: center;">
+                @if (!string.IsNullOrEmpty(car.Image))
+                {
+                    var imgSrc = car.Image.StartsWith("http") ? car.Image : Url.Content("~/uploads/" + car.Image);
+                    <img src="@imgSrc" alt="@car.Brand @car.Model" class="img-fluid w-100" style="object-fit: cover; max-height: 420px;" />
+                }
+                else
+                {
+                    <div class="p-5 text-muted text-center">
+                        <svg width="64" height="64" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4M3 13h18M5 17h14a2 2 0 002-2v-3a2 2 0 00-.59-1.41L17 7.17A2 2 0 0015.59 6.5H8.41a2 2 0 00-1.41.67L3.59 10.59A2 2 0 003 12v3a2 2 0 002 2z"></path>
+                        </svg>
+                        <div class="mt-2">@car.Brand @car.Model</div>
+                    </div>
+                }
+            </div>
+
+            <!-- Vehicle Specifications Matrix -->
+            <div class="p-4 rounded-3 bg-white border mb-4">
+                <h4 class="fw-bold mb-3">Technical Specifications</h4>
+                <div class="row g-3">
+                    <div class="col-sm-6 col-md-4">
+                        <div class="p-3 rounded bg-light border">
+                            <div class="text-muted small">Transmission</div>
+                            <div class="fw-bold fs-6">@car.Transmission</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-4">
+                        <div class="p-3 rounded bg-light border">
+                            <div class="text-muted small">Powertrain</div>
+                            <div class="fw-bold fs-6">@car.FuelType</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-4">
+                        <div class="p-3 rounded bg-light border">
+                            <div class="text-muted small">Passenger Capacity</div>
+                            <div class="fw-bold fs-6">@car.Seats Adults</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-4">
+                        <div class="p-3 rounded bg-light border">
+                            <div class="text-muted small">Luggage Capacity</div>
+                            <div class="fw-bold fs-6">@car.Luggage Suitcases</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-4">
+                        <div class="p-3 rounded bg-light border">
+                            <div class="text-muted small">Model Year</div>
+                            <div class="fw-bold fs-6">@car.Year</div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-md-4">
+                        <div class="p-3 rounded bg-light border">
+                            <div class="text-muted small">Mileage Policy</div>
+                            <div class="fw-bold fs-6">@car.Mileage</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vehicle Description & Included Features -->
+            <div class="p-4 rounded-3 bg-white border mb-4">
+                <h4 class="fw-bold mb-3">Vehicle Overview</h4>
+                <p class="text-secondary">@car.Description</p>
+
+                <h5 class="fw-bold mt-4 mb-3">Standard Amenities Included</h5>
+                <div class="row g-2 small text-secondary">
+                    <div class="col-sm-6">&bull; Bluetooth & USB Mobile Audio Streaming</div>
+                    <div class="col-sm-6">&bull; Reversing Camera & Parking Radar</div>
+                    <div class="col-sm-6">&bull; Dual-Zone Air Conditioning Climate Control</div>
+                    <div class="col-sm-6">&bull; ISOFIX Child Seat Anchor System</div>
+                    <div class="col-sm-6">&bull; Electronic Stability & Traction Control</div>
+                    <div class="col-sm-6">&bull; 24/7 New Zealand AA Roadside Breakdown Support</div>
+                </div>
+            </div>
+
+            <!-- Rental Conditions & Deposit -->
+            <div class="p-4 rounded-3 bg-white border">
+                <h4 class="fw-bold mb-3">Rental Conditions & Security Deposit</h4>
+                <ul class="text-secondary small mb-0 d-flex flex-column gap-2">
+                    <li><strong>Standard Security Deposit:</strong> A refundable bond of $250.00 NZD is pre-authorized on your card at vehicle collection.</li>
+                    <li><strong>Driver Age & Licence:</strong> Primary driver must be at least 21 years of age and hold a current, full driver's licence.</li>
+                    <li><strong>Fuel Policy:</strong> Same-to-same. Return vehicle with the same level of fuel/charge as provided at pickup.</li>
+                    <li><strong>Cancellation:</strong> 100% free cancellation up to 48 hours prior to scheduled pickup.</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Sticky Booking Call-To-Action Box -->
+        <div class="col-lg-5">
+            <div class="p-4 rounded-3 bg-white border shadow-sm" style="position: sticky; top: 90px;">
+                <h4 class="fw-bold mb-1">Reserve This Vehicle</h4>
+                <p class="text-muted small mb-4">Lock in your dates instantly. No advance payment required.</p>
+
+                <form asp-controller="Booking" asp-action="Reserve" method="get">
+                    <input type="hidden" name="carId" value="@car.CarDescriptionId" />
+
+                    <div class="mb-3">
+                        <label class="apex-form-label" for="pickupLoc">Pickup Location</label>
+                        <select class="apex-form-control" id="pickupLoc" name="pickupLocationId">
+                            @foreach (var loc in Model.Locations)
+                            {
+                                <option value="@loc.LocationId">@loc.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="apex-form-label" for="returnLoc">Return Location</label>
+                        <select class="apex-form-control" id="returnLoc" name="returnLocationId">
+                            @foreach (var loc in Model.Locations)
+                            {
+                                <option value="@loc.LocationId">@loc.Name</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="apex-form-label" for="pDate">Pickup Date</label>
+                            <input type="datetime-local" class="apex-form-control" id="pDate" name="pickupDateTime" value="@Model.DefaultPickupDate.ToString("yyyy-MM-ddTHH:mm")" />
+                        </div>
+                        <div class="col-6">
+                            <label class="apex-form-label" for="rDate">Return Date</label>
+                            <input type="datetime-local" class="apex-form-control" id="rDate" name="returnDateTime" value="@Model.DefaultReturnDate.ToString("yyyy-MM-ddTHH:mm")" />
+                        </div>
+                    </div>
+
+                    <!-- Pricing Preview -->
+                    <div class="p-3 rounded bg-light border mb-4">
+                        <div class="d-flex justify-content-between small text-muted mb-1">
+                            <span>Base Rate (@Model.EstimatedPricing.RentalDays days at $@car.RatePerDay.ToString("N2"))</span>
+                            <span>$@Model.EstimatedPricing.GrossBaseCost.ToString("N2")</span>
+                        </div>
+                        @if (Model.EstimatedPricing.DurationDiscountPercent > 0)
+                        {
+                            <div class="d-flex justify-content-between small text-success mb-1">
+                                <span>Duration Discount (@Model.EstimatedPricing.DurationDiscountPercent%)</span>
+                                <span>-$@Model.EstimatedPricing.DiscountAmount.ToString("N2")</span>
+                            </div>
+                        }
+                        <div class="d-flex justify-content-between small text-muted mb-1">
+                            <span>NZ GST (15% Included)</span>
+                            <span>$@Model.EstimatedPricing.TaxAmount.ToString("N2")</span>
+                        </div>
+                        <hr class="my-2" />
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="fw-bold">Estimated Total</span>
+                            <span class="fs-5 fw-bold text-dark">$@Model.EstimatedPricing.TotalAmount.ToString("N2") NZD</span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-brand w-100 py-3" style="font-size: 1.05rem;">
+                        Proceed to Booking &rarr;
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
 </div>

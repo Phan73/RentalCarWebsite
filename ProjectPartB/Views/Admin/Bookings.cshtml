@@ -1,0 +1,183 @@
+@model IEnumerable<ProjectPartB.Models.Booking>
+@{
+    ViewData["Title"] = "Reservations Management — Admin";
+    var currentStatus = ViewData["CurrentStatus"] as ProjectPartB.Models.BookingStatus?;
+    var currentSearch = ViewData["CurrentSearch"] as string;
+}
+
+<div class="py-4 bg-white border-bottom mb-4">
+    <div class="container-fluid px-lg-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <span class="text-uppercase fw-bold text-muted small" style="letter-spacing: 0.05em;">Dispatch & Bookings</span>
+                <h1 class="h2 fw-bold mb-0">Reservation Directory</h1>
+            </div>
+            <a asp-action="Index" class="btn btn-outline-secondary">Dashboard Overview</a>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid px-lg-4 pb-5">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <!-- Search & Status Filter Bar -->
+    <div class="p-3 rounded-3 bg-white border mb-4 shadow-sm">
+        <form asp-action="Bookings" method="get" class="row g-3 align-items-center">
+            <div class="col-md-5">
+                <input type="text" class="apex-form-control" name="search" value="@currentSearch" placeholder="Search by reference, customer name, email, or licence..." />
+            </div>
+            <div class="col-md-4">
+                <select class="apex-form-control" name="status">
+                    <option value="">All Statuses</option>
+                    <option value="Confirmed" selected="@(currentStatus == ProjectPartB.Models.BookingStatus.Confirmed)">Confirmed (Upcoming)</option>
+                    <option value="Active" selected="@(currentStatus == ProjectPartB.Models.BookingStatus.Active)">On Road (Active)</option>
+                    <option value="Completed" selected="@(currentStatus == ProjectPartB.Models.BookingStatus.Completed)">Returned & Completed</option>
+                    <option value="Cancelled" selected="@(currentStatus == ProjectPartB.Models.BookingStatus.Cancelled)">Cancelled</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn-brand flex-grow-1">Filter</button>
+                <a asp-action="Bookings" class="btn btn-outline-secondary">Reset</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Reservations Table -->
+    <div class="p-4 rounded-3 bg-white border shadow-sm">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5 text-muted">
+                <h5>No reservations found matching the selected filters.</h5>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead class="table-light small">
+                        <tr>
+                            <th>Reference</th>
+                            <th>Renter & Driving Licence</th>
+                            <th>Vehicle</th>
+                            <th>Pickup Depot & Date</th>
+                            <th>Return Depot & Date</th>
+                            <th>Financials</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="small">
+                        @foreach (var b in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-controller="Booking" asp-action="Confirmation" asp-route-reference="@b.BookingReference" class="fw-bold text-dark font-monospace text-decoration-none">
+                                        @b.BookingReference
+                                    </a>
+                                </td>
+                                <td>
+                                    <div class="fw-bold">@b.CustomerName</div>
+                                    <div class="text-muted small">@b.CustomerEmail</div>
+                                    <div class="text-muted font-monospace" style="font-size: 0.75rem;">Licence: @b.DriverLicenseNumber</div>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">@b.CarDescription?.Brand @b.CarDescription?.Model</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">@b.CarDescription?.Year &bull; @b.CarDescription?.Color</div>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">@b.PickupLocation?.Name</div>
+                                    <div class="text-muted">@b.PickupDateTime.ToString("dd MMM yyyy, HH:mm")</div>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">@b.ReturnLocation?.Name</div>
+                                    <div class="text-muted">@b.ReturnDateTime.ToString("dd MMM yyyy, HH:mm")</div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold fs-6">$@b.TotalAmount.ToString("N2")</div>
+                                    <div class="text-muted" style="font-size: 0.75rem;">@b.Payment?.PaymentMethod &bull; @(b.Payment?.Status ?? "Unpaid")</div>
+                                </td>
+                                <td>
+                                    @switch (b.Status)
+                                    {
+                                        case ProjectPartB.Models.BookingStatus.Confirmed:
+                                            <span class="badge badge-status badge-confirmed">Confirmed</span>
+                                            break;
+                                        case ProjectPartB.Models.BookingStatus.Active:
+                                            <span class="badge badge-status badge-active">On Road</span>
+                                            break;
+                                        case ProjectPartB.Models.BookingStatus.Completed:
+                                            <span class="badge badge-status badge-completed">Returned</span>
+                                            break;
+                                        case ProjectPartB.Models.BookingStatus.Cancelled:
+                                            <span class="badge badge-status badge-cancelled">Cancelled</span>
+                                            break;
+                                        default:
+                                            <span class="badge badge-status badge-pending">Pending</span>
+                                            break;
+                                    }
+                                </td>
+                                <td>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                            Status
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            @if (b.Status == ProjectPartB.Models.BookingStatus.Confirmed)
+                                            {
+                                                <li>
+                                                    <form asp-action="UpdateBookingStatus" method="post">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@b.BookingId" />
+                                                        <input type="hidden" name="newStatus" value="Active" />
+                                                        <button type="submit" class="dropdown-item text-primary">Mark as Picked Up (On Road)</button>
+                                                    </form>
+                                                </li>
+                                            }
+                                            @if (b.Status == ProjectPartB.Models.BookingStatus.Active)
+                                            {
+                                                <li>
+                                                    <form asp-action="UpdateBookingStatus" method="post">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@b.BookingId" />
+                                                        <input type="hidden" name="newStatus" value="Completed" />
+                                                        <button type="submit" class="dropdown-item text-success">Mark as Returned (Completed)</button>
+                                                    </form>
+                                                </li>
+                                            }
+                                            @if (b.Status != ProjectPartB.Models.BookingStatus.Cancelled && b.Status != ProjectPartB.Models.BookingStatus.Completed)
+                                            {
+                                                <li>
+                                                    <form asp-action="UpdateBookingStatus" method="post">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="id" value="@b.BookingId" />
+                                                        <input type="hidden" name="newStatus" value="Cancelled" />
+                                                        <button type="submit" class="dropdown-item text-danger">Cancel Booking</button>
+                                                    </form>
+                                                </li>
+                                            }
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item" asp-controller="Booking" asp-action="Confirmation" asp-route-reference="@b.BookingReference">View Tax Invoice</a></li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

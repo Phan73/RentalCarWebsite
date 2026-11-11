@@ -1,101 +1,76 @@
-﻿@page
+@page
 @model RegisterModel
 @{
-    ViewData["Title"] = "Register";
+    ViewData["Title"] = "Customer Registration";
 }
 
-<h1>@ViewData["Title"]</h1>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="p-4 p-md-5 rounded-3 bg-white border shadow-sm">
+                <div class="text-center mb-4">
+                    <span class="text-uppercase fw-bold text-muted small" style="letter-spacing: 0.05em;">Join Apex Car Rentals</span>
+                    <h2 class="fw-bold mb-1">Create Customer Account</h2>
+                    <p class="text-muted small">Enjoy faster bookings, exclusive duration discounts, and self-service reservation management.</p>
+                </div>
 
-<div class="row">
-    <div class="col-md-4">
-        <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
-            <h2>Create a new account.</h2>
-            <hr />
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-floating">
-                <input asp-for="Input.Email" class="form-control" autocomplete="username" aria-required="true" />
-                <label asp-for="Input.Email"></label>
-                <span asp-validation-for="Input.Email" class="text-danger"></span>
-            </div>
-            <div class="form-floating">
-                <input asp-for="Input.FullName" class="form-control" autocomplete="fullname" aria-required="true" />
-                <label asp-for="Input.FullName"></label>
-                <span asp-validation-for="Input.FullName" class="text-danger"></span>
-            </div>
-            <div class="form-floating">
-                <input asp-for="Input.Phone" class="form-control" autocomplete="phone" aria-required="true" />
-                <label asp-for="Input.Phone"></label>
-                <span asp-validation-for="Input.Phone" class="text-danger"></span>
-            </div>
-            <div class="form-floating">
-                <input asp-for="Input.Address" class="form-control" autocomplete="address" aria-required="true" />
-                <label asp-for="Input.Address"></label>
-                <span asp-validation-for="Input.Address" class="text-danger"></span>
-            </div>
-            <div class="form-floating">
-                <input asp-for="Input.DrivingLicense" class="form-control" autocomplete="driverlicense" aria-required="true" />
-                <label asp-for="Input.DrivingLicense"></label>
-                <span asp-validation-for="Input.DrivingLicense" class="text-danger"></span>
-            </div>
-            <div class="form-floating">
-                <input asp-for="Input.UserID" class="form-control" autocomplete="userid" aria-required="true" />
-                <label asp-for="Input.UserID"></label>
-                <span asp-validation-for="Input.UserID" class="text-danger"></span>
-            </div>
-            <div class="form-floating">
-                <input asp-for="Input.Password" class="form-control" autocomplete="new-password" aria-required="true" />
-                <label asp-for="Input.Password"></label>
-                <span asp-validation-for="Input.Password" class="text-danger"></span>
-            </div>
-            <div class="form-floating">
-                <input asp-for="Input.ConfirmPassword" class="form-control" autocomplete="new-password" aria-required="true" />
-                <label asp-for="Input.ConfirmPassword"></label>
-                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
-            </div>
-            <div class="form-floating">
-                <select asp-for="Input.Membership" class="form-control">
-                    <option value="0">Free</option>
-                    <option value="1">Silver</option>
-                    <option value="2">Gold</option>
-                    <option value="3">Platinum</option>
-                </select>
-                <label asp-for="Input.Membership">Membership Type</label>
-            </div>
+                <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post">
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-3" role="alert"></div>
 
-            
-
-            <button id="registerSubmit" type="submit" class="w-100 btn btn-lg btn-primary">Register</button>
-        </form>
-    </div>
-    <div class="col-md-6 col-md-offset-2">
-        <section>
-            <h3>Use another service to register.</h3>
-            <hr />
-            @{
-                if ((Model.ExternalLogins?.Count ?? 0) == 0)
-                {
-                    <div>
-                        <p>
-                            There are no external authentication services configured. See this <a href="https://go.microsoft.com/fwlink/?LinkID=532715">article
-                            about setting up this ASP.NET application to support logging in via external services</a>.
-                        </p>
-                    </div>
-                }
-                else
-                {
-                    <form id="external-account" asp-page="./ExternalLogin" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="form-horizontal">
-                        <div>
-                            <p>
-                                @foreach (var provider in Model.ExternalLogins!)
-                                {
-                                    <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
-                                }
-                            </p>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label asp-for="Input.FullName" class="apex-form-label">Full Legal Name *</label>
+                            <input asp-for="Input.FullName" class="apex-form-control" placeholder="e.g. Emma Walker" required />
+                            <span asp-validation-for="Input.FullName" class="text-danger small"></span>
                         </div>
-                    </form>
-                }
-            }
-        </section>
+
+                        <div class="col-md-6">
+                            <label asp-for="Input.Email" class="apex-form-label">Email Address *</label>
+                            <input asp-for="Input.Email" class="apex-form-control" type="email" placeholder="name@example.co.nz" required />
+                            <span asp-validation-for="Input.Email" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Input.Phone" class="apex-form-label">Phone Contact *</label>
+                            <input asp-for="Input.Phone" class="apex-form-control" type="tel" placeholder="+64 21 555 7890" required />
+                            <span asp-validation-for="Input.Phone" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="Input.Address" class="apex-form-label">Residential Address *</label>
+                            <input asp-for="Input.Address" class="apex-form-control" placeholder="Street address, Suburb, City" required />
+                            <span asp-validation-for="Input.Address" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label asp-for="Input.DrivingLicense" class="apex-form-label">Driver's Licence Number *</label>
+                            <input asp-for="Input.DrivingLicense" class="apex-form-control" placeholder="e.g. NZL-882910" required />
+                            <span asp-validation-for="Input.DrivingLicense" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Input.Password" class="apex-form-label">Password *</label>
+                            <input asp-for="Input.Password" class="apex-form-control" type="password" required />
+                            <span asp-validation-for="Input.Password" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label asp-for="Input.ConfirmPassword" class="apex-form-label">Confirm Password *</label>
+                            <input asp-for="Input.ConfirmPassword" class="apex-form-control" type="password" required />
+                            <span asp-validation-for="Input.ConfirmPassword" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <button id="registerSubmit" type="submit" class="btn-brand w-100 py-3 mt-4" style="font-size: 1rem;">
+                        Create Account &rarr;
+                    </button>
+                </form>
+
+                <div class="text-center mt-4 pt-3 border-top small text-muted">
+                    Already registered? <a asp-page="./Login" asp-route-returnUrl="@Model.ReturnUrl" class="fw-bold">Sign in here</a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 

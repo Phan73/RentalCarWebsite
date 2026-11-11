@@ -1,23 +1,54 @@
-﻿@model IEnumerable<Microsoft.AspNetCore.Identity.IdentityRole>
+@model IEnumerable<Microsoft.AspNetCore.Identity.IdentityRole>
+@{
+    ViewData["Title"] = "System Roles Directory";
+}
 
-<h1>Roles:</h1>
-<br />
-<a href="@Url.Action("CreateRole")">Create New Role</a>
-<table class="table">
-    <tr>
-        <th>Role Name</th>
-        <th>Action</th>
-    </tr>
-    @foreach (var role in Model)
-    {
-        <tr>
-            <td>@role.Name</td>
-            <td>
-                <a href="@Url.Action("EditRole", new {id=role.Id})">Edit</a>
-                <a href="@Url.Action("DeleteRole", new {id=role.Id})">Delete</a>
-            </td>
-        </tr>
-    }
+<div class="py-4 bg-white border-bottom mb-4">
+    <div class="container-fluid px-lg-4">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <span class="text-uppercase fw-bold text-muted small" style="letter-spacing: 0.05em;">Security & Access Control</span>
+                <h1 class="h2 fw-bold mb-0">System Roles Directory</h1>
+            </div>
+            <div class="d-flex gap-2">
+                <a asp-action="CreateRole" class="btn-brand">Create New Role</a>
+                <a asp-action="Users" class="btn btn-outline-secondary">User Assignments</a>
+            </div>
+        </div>
+    </div>
+</div>
 
-
-</table>
+<div class="container-fluid px-lg-4 pb-5">
+    <div class="p-4 rounded-3 bg-white border shadow-sm">
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead class="table-light small">
+                    <tr>
+                        <th>Role Name</th>
+                        <th>Normalized Name</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="small">
+                    @foreach (var role in Model)
+                    {
+                        <tr>
+                            <td class="fw-bold fs-6">@role.Name</td>
+                            <td class="font-monospace text-muted">@role.NormalizedName</td>
+                            <td>
+                                <div class="d-flex gap-2">
+                                    <a asp-action="EditRole" asp-route-id="@role.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
+                                    <form asp-action="DeleteRole" method="post" onsubmit="return confirm('Are you sure you want to delete this role?');">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@role.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

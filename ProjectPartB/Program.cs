@@ -1,57 +1,142 @@
+using System;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using ProjectPartB.Areas.Identity.Data;
+using ProjectPartB.Data;
 using ProjectPartB.Models;
-using Microsoft.AspNetCore.Http;
+using ProjectPartB.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'CustomIdentityContextConnection' not found.");
 
-builder.Services.AddDbContext<CustomIdentityContext>(options =>
-    options.UseSqlServer(connectionString));
-builder.Services.AddDbContext<FS23_Group4_ProjectContext>(options =>
-    options.UseSqlServer(connectionString));
-
-builder.Services.AddDefaultIdentity<WebUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<CustomIdentityContext>();
-
-// Add services to the container.
-builder.Services.AddControllersWithViews();
-var services = builder.Services;
+// Configuration & Connection Strings
 var configuration = builder.Configuration;
-services.AddAuthentication().AddGoogle(googleOptions =>
+var defaultConn = configuration.GetConnectionString("DefaultConnection");
+bool useSqlite = configuration.GetValue<bool>("UseSqlite") ||
+                 (defaultConn != null && defaultConn.Contains(".db", StringComparison.OrdinalIgnoreCase));
+
+if (useSqlite || string.IsNullOrEmpty(defaultConn))
 {
-    googleOptions.ClientId = configuration["Authentication:Google:ClientId"];
-    googleOptions.ClientSecret = configuration["Authentication:Google:ClientSecret"];
-});
-// Add session services
+    var sqliteConn = configuration.GetConnectionString("SqliteConnection") ?? "Data Source=RentalCarWebsite.db";
+    builder.Services.AddDbContext<CustomIdentityContext>(options =>
+        options.UseSqlite(sqliteConn));
+    builder.Services.AddDbContext<FS23_Group4_ProjectContext>(options =>
+        options.UseSqlite(sqliteConn));
+}
+else
+{
+    builder.Services.AddDbContext<CustomIdentityContext>(options =>
+        options.UseSqlServer(defaultConn, sqlOptions => sqlOptions.EnableRetryOnFailure()));
+    builder.Services.AddDbContext<FS23_Group4_ProjectContext>(options =>
+        options.UseSqlServer(defaultConn, sqlOptions => sqlOptions.EnableRetryOnFailure()));
+}
+
+// ASP.NET Core Identity
+builder.Services.AddDefaultIdentity<WebUser>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = false; // Accessible self-registration
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireNonAlphanumeric = false;
+    options.Password.RequireUppercase = false;
+    options.Password.RequiredLength = 6;
+})
+.AddRoles<IdentityRole>()
+.AddEntityFrameworkStores<CustomIdentityContext>();
+
+// Application & Business Services
+builder.Services.AddScoped<IPricingService, PricingService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IFleetService, FleetService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IEmailNotificationService, EmailNotificationService>();
+builder.Services.AddScoped<IEmailSender, EmailNotificationService>();
+
+// MVC & Razor
+builder.Services.AddControllersWithViews();
+builder.Services.AddRazorPages();
+
+// Optional External Google Authentication
+var googleClientId = configuration["Authentication:Google:ClientId"];
+var googleClientSecret = configuration["Authentication:Google:ClientSecret"];
+if (!string.IsNullOrWhiteSpace(googleClientId) && !string.IsNullOrWhiteSpace(googleClientSecret))
+{
+    builder.Services.AddAuthentication().AddGoogle(googleOptions =>
+    {
+        googleOptions.ClientId = googleClientId;
+        googleOptions.ClientSecret = googleClientSecret;
+    });
+}
+
+// Session Configuration
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>
 {
-    // Set session options here
-    options.IdleTimeout = TimeSpan.FromMinutes(30); // e.g. 30 minutes
+    options.IdleTimeout = TimeSpan.FromMinutes(45);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
+    options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
+});
+
+// Role-Based Authorization Policies
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAdmin", policy => policy.RequireRole("Administrator"));
+    options.AddPolicy("RequireStaff", policy => policy.RequireRole("Administrator", "Manager", "Staff"));
+    options.AddPolicy("RequireCustomer", policy => policy.RequireRole("Administrator", "Manager", "Staff", "Customer", "Visitor"));
 });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Seed Database (Roles, Locations, Categories, Vehicles, Initial Data)
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var logger = services.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        var projectCtx = services.GetRequiredService<FS23_Group4_ProjectContext>();
+        var identityCtx = services.GetRequiredService<CustomIdentityContext>();
+        var roleMgr = services.GetRequiredService<RoleManager<IdentityRole>>();
+        var userMgr = services.GetRequiredService<UserManager<WebUser>>();
+
+        await DatabaseSeeder.SeedAsync(projectCtx, identityCtx, roleMgr, userMgr);
+        logger.LogInformation("Database initialized and seeded successfully.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred while initializing and seeding the database.");
+    }
+}
+
+// HTTP Request Pipeline
 if (!app.Environment.IsDevelopment())
 {
-
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
-app.UseStaticFiles();
+
+// Security Headers Middleware
+app.Use(async (context, next) =>
+{
+    context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+    context.Response.Headers.Append("X-Frame-Options", "SAMEORIGIN");
+    context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+    await next();
+});
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-// Use session middleware here
+app.UseRouting();
 app.UseSession();
 
-app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 

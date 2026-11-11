@@ -1,0 +1,355 @@
+@model ProjectPartB.Models.ViewModels.BookingFormViewModel
+@{
+    ViewData["Title"] = $"Complete Reservation — {Model.Vehicle?.Brand} {Model.Vehicle?.Model}";
+    var car = Model.Vehicle!;
+}
+
+<div class="py-4 bg-white border-bottom mb-4">
+    <div class="container">
+        <span class="text-uppercase fw-bold text-muted small" style="letter-spacing: 0.05em;">Reservation Checkout</span>
+        <h1 class="h2 fw-bold mb-0">Confirm Your Booking</h1>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <form asp-action="Confirm" method="post" id="bookingForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="CarDescriptionId" id="carIdField" />
+
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4" role="alert"></div>
+
+        <div class="row g-5">
+            <!-- Left Column: Booking Form Steps -->
+            <div class="col-lg-7">
+                <!-- Step 1: Vehicle Summary & Itinerary -->
+                <div class="p-4 rounded-3 bg-white border mb-4 shadow-sm">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="metric-icon-box primary">
+                            <span class="fw-bold fs-5">1</span>
+                        </div>
+                        <div>
+                            <h4 class="fw-bold mb-0">Itinerary & Locations</h4>
+                            <div class="text-muted small">Select your pickup and return branch depots and dates.</div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="apex-form-label" for="pickupLocationId">Pickup Location</label>
+                            <select class="apex-form-control" asp-for="PickupLocationId" id="pickupLocationId">
+                                @foreach (var loc in Model.Locations)
+                                {
+                                    <option value="@loc.LocationId">@loc.Name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="apex-form-label" for="returnLocationId">Return Location</label>
+                            <select class="apex-form-control" asp-for="ReturnLocationId" id="returnLocationId">
+                                @foreach (var loc in Model.Locations)
+                                {
+                                    <option value="@loc.LocationId">@loc.Name</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="apex-form-label" for="pickupDateTime">Pickup Date & Time</label>
+                            <input type="datetime-local" class="apex-form-control date-input" asp-for="PickupDateTime" id="pickupDateTime" />
+                            <span asp-validation-for="PickupDateTime" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="apex-form-label" for="returnDateTime">Return Date & Time</label>
+                            <input type="datetime-local" class="apex-form-control date-input" asp-for="ReturnDateTime" id="returnDateTime" />
+                            <span asp-validation-for="ReturnDateTime" class="text-danger small"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 2: Protection & Optional Extras -->
+                <div class="p-4 rounded-3 bg-white border mb-4 shadow-sm">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="metric-icon-box navy">
+                            <span class="fw-bold fs-5">2</span>
+                        </div>
+                        <div>
+                            <h4 class="fw-bold mb-0">Coverage & Optional Extras</h4>
+                            <div class="text-muted small">Add peace-of-mind equipment and travel protections.</div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-column gap-3">
+                        <!-- Zero-Excess Cover -->
+                        <div class="p-3 rounded border d-flex justify-content-between align-items-center" style="background: var(--brand-teal-50);">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input extra-toggle" type="checkbox" asp-for="IncludeZeroExcess" id="includeZeroExcess" style="width: 1.25em; height: 1.25em;" />
+                                <label class="form-check-label ms-2" for="includeZeroExcess">
+                                    <strong class="d-block text-dark">Zero-Excess Comprehensive Cover</strong>
+                                    <span class="small text-secondary">Reduces your accident damage excess from $2,500 down to $0.00 and waives the standard security deposit.</span>
+                                </label>
+                            </div>
+                            <div class="text-end ps-3">
+                                <span class="fw-bold text-dark fs-6">+$25.00</span>
+                                <span class="small text-muted d-block">/ day</span>
+                            </div>
+                        </div>
+
+                        <!-- GPS -->
+                        <div class="p-3 rounded border d-flex justify-content-between align-items-center bg-light">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input extra-toggle" type="checkbox" asp-for="IncludeGps" id="includeGps" style="width: 1.2em; height: 1.2em;" />
+                                <label class="form-check-label ms-2" for="includeGps">
+                                    <strong class="d-block text-dark">Dedicated GPS Sat-Nav Unit</strong>
+                                    <span class="small text-secondary">Pre-loaded New Zealand touring maps, scenic viewpoints, and speed camera alerts.</span>
+                                </label>
+                            </div>
+                            <div class="text-end ps-3">
+                                <span class="fw-bold text-dark fs-6">+$10.00</span>
+                                <span class="small text-muted d-block">/ day</span>
+                            </div>
+                        </div>
+
+                        <!-- Child Seat -->
+                        <div class="p-3 rounded border d-flex justify-content-between align-items-center bg-light">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input extra-toggle" type="checkbox" asp-for="IncludeChildSeat" id="includeChildSeat" style="width: 1.2em; height: 1.2em;" />
+                                <label class="form-check-label ms-2" for="includeChildSeat">
+                                    <strong class="d-block text-dark">Child Safety Booster Seat</strong>
+                                    <span class="small text-secondary">Compliant with New Zealand standard AS/NZS 1754 for toddlers and children.</span>
+                                </label>
+                            </div>
+                            <div class="text-end ps-3">
+                                <span class="fw-bold text-dark fs-6">+$12.00</span>
+                                <span class="small text-muted d-block">/ day</span>
+                            </div>
+                        </div>
+
+                        <!-- Additional Driver -->
+                        <div class="p-3 rounded border d-flex justify-content-between align-items-center bg-light">
+                            <div class="form-check mb-0">
+                                <input class="form-check-input extra-toggle" type="checkbox" asp-for="IncludeAdditionalDriver" id="includeAdditionalDriver" style="width: 1.2em; height: 1.2em;" />
+                                <label class="form-check-label ms-2" for="includeAdditionalDriver">
+                                    <strong class="d-block text-dark">Additional Authorized Driver</strong>
+                                    <span class="small text-secondary">Share driving duties on long scenic road trips with full insurance coverage.</span>
+                                </label>
+                            </div>
+                            <div class="text-end ps-3">
+                                <span class="fw-bold text-dark fs-6">+$8.00</span>
+                                <span class="small text-muted d-block">/ day</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Primary Driver & Contact Information -->
+                <div class="p-4 rounded-3 bg-white border mb-4 shadow-sm">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                        <div class="metric-icon-box success">
+                            <span class="fw-bold fs-5">3</span>
+                        </div>
+                        <div>
+                            <h4 class="fw-bold mb-0">Driver & Contact Information</h4>
+                            <div class="text-muted small">Must match the government-issued driving licence presented at collection.</div>
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="apex-form-label" asp-for="CustomerName">Full Legal Name *</label>
+                            <input class="apex-form-control" asp-for="CustomerName" placeholder="e.g. Emma Walker" required />
+                            <span asp-validation-for="CustomerName" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="apex-form-label" asp-for="CustomerEmail">Email Address *</label>
+                            <input class="apex-form-control" type="email" asp-for="CustomerEmail" placeholder="e.g. emma.walker@example.co.nz" required />
+                            <span asp-validation-for="CustomerEmail" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="apex-form-label" asp-for="CustomerPhone">Phone Number *</label>
+                            <input class="apex-form-control" type="tel" asp-for="CustomerPhone" placeholder="e.g. +64 21 555 7890" required />
+                            <span asp-validation-for="CustomerPhone" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="apex-form-label" asp-for="DriverLicenseNumber">Driver's Licence Number *</label>
+                            <input class="apex-form-control" asp-for="DriverLicenseNumber" placeholder="e.g. NZL-882910" required />
+                            <span asp-validation-for="DriverLicenseNumber" class="text-danger small"></span>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="apex-form-label" asp-for="CustomerNotes">Special Requests / Flight Number (Optional)</label>
+                            <textarea class="apex-form-control" asp-for="CustomerNotes" rows="2" placeholder="e.g. Arriving on Air New Zealand flight NZ402"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 4: Payment Method Selection -->
+                <div class="p-4 rounded-3 bg-white border mb-4 shadow-sm">
+                    <h5 class="fw-bold mb-3">Payment Preference</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="p-3 rounded border h-100 bg-light">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" asp-for="PaymentMethod" value="Pay at Pickup" id="payPickup" checked />
+                                    <label class="form-check-label fw-bold" for="payPickup">
+                                        Pay at Branch Counter
+                                    </label>
+                                    <div class="small text-muted mt-1">Pay with EFTPOS, Visa, Mastercard, or Amex when collecting keys. No deposit charged today.</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="p-3 rounded border h-100 bg-light">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" asp-for="PaymentMethod" value="Credit Card (Simulated)" id="payCard" />
+                                    <label class="form-check-label fw-bold" for="payCard">
+                                        Instant Credit Card Settlement
+                                    </label>
+                                    <div class="small text-muted mt-1">Instant server-side booking confirmation with zero card processing surcharges.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Sticky Summary & Price Breakdown Receipt -->
+            <div class="col-lg-5">
+                <div class="receipt-card" style="position: sticky; top: 90px;">
+                    <div class="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom">
+                        @if (!string.IsNullOrEmpty(car.Image))
+                        {
+                            var imgSrc = car.Image.StartsWith("http") ? car.Image : Url.Content("~/uploads/" + car.Image);
+                            <img src="@imgSrc" alt="@car.Brand @car.Model" class="rounded" style="width: 80px; height: 60px; object-fit: cover;" />
+                        }
+                        <div>
+                            <h5 class="fw-bold mb-0">@car.Brand @car.Model</h5>
+                            <span class="text-muted small">@(car.CarType?.Name ?? car.CarTypeName) &bull; @car.Transmission</span>
+                        </div>
+                    </div>
+
+                    <h5 class="fw-bold mb-3">Transparent Price Breakdown</h5>
+
+                    <div id="pricingReceipt">
+                        <div class="receipt-line">
+                            <span class="text-secondary" id="summaryDuration">Base Rental (@(Model.CalculatedPricing?.RentalDays ?? 1) days)</span>
+                            <span class="fw-semibold text-dark" id="summaryGross">$@(Model.CalculatedPricing?.GrossBaseCost.ToString("N2") ?? "0.00")</span>
+                        </div>
+
+                        <div class="receipt-line" id="discountLine" style="@(Model.CalculatedPricing != null && Model.CalculatedPricing.DurationDiscountPercent > 0 ? "" : "display: none;")">
+                            <span class="text-success" id="summaryDiscountLabel">Duration Discount (@(Model.CalculatedPricing?.DurationDiscountPercent ?? 0)%)</span>
+                            <span class="text-success fw-semibold" id="summaryDiscount">-$@(Model.CalculatedPricing?.DiscountAmount.ToString("N2") ?? "0.00")</span>
+                        </div>
+
+                        <div class="receipt-line">
+                            <span class="text-secondary">Selected Extras</span>
+                            <span class="fw-semibold text-dark" id="summaryExtras">$@(Model.CalculatedPricing?.ExtrasTotal.ToString("N2") ?? "0.00")</span>
+                        </div>
+
+                        <div class="receipt-line">
+                            <span class="text-secondary">Subtotal</span>
+                            <span class="fw-semibold text-dark" id="summarySubtotal">$@(Model.CalculatedPricing?.SubTotal.ToString("N2") ?? "0.00")</span>
+                        </div>
+
+                        <div class="receipt-line">
+                            <span class="text-secondary">NZ GST (15% Included)</span>
+                            <span class="fw-semibold text-dark" id="summaryTax">$@(Model.CalculatedPricing?.TaxAmount.ToString("N2") ?? "0.00")</span>
+                        </div>
+
+                        <div class="receipt-line">
+                            <span class="text-secondary">Refundable Bond</span>
+                            <span class="fw-semibold text-dark" id="summaryDeposit">$@(Model.CalculatedPricing?.SecurityDeposit.ToString("N2") ?? "250.00")</span>
+                        </div>
+
+                        <div class="receipt-line total">
+                            <span>Total Rental Cost</span>
+                            <span id="summaryTotal">$@(Model.CalculatedPricing?.TotalAmount.ToString("N2") ?? "0.00") NZD</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-top">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="termsCheck" required />
+                            <label class="form-check-label small text-muted" for="termsCheck">
+                                I confirm I am 21+ with a valid driver's licence and agree to the <a asp-controller="Home" asp-action="About" target="_blank">Rental Terms</a> and <a asp-controller="Home" asp-action="Privacy" target="_blank">Privacy Policy</a>.
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn-brand w-100 py-3" style="font-size: 1.1rem;">
+                            Confirm Reservation &rarr;
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+    // Live AJAX server-side pricing recalculation
+    async function updatePricing() {
+        const carId = parseInt(document.getElementById('carIdField').value);
+        const pDate = document.getElementById('pickupDateTime').value;
+        const rDate = document.getElementById('returnDateTime').value;
+        const incGps = document.getElementById('includeGps').checked;
+        const incChild = document.getElementById('includeChildSeat').checked;
+        const incDriver = document.getElementById('includeAdditionalDriver').checked;
+        const incZero = document.getElementById('includeZeroExcess').checked;
+
+        if (!pDate || !rDate) return;
+
+        const payload = {
+            carId: carId,
+            pickupDateTime: pDate,
+            returnDateTime: rDate,
+            includeGps: incGps,
+            includeChildSeat: incChild,
+            includeAdditionalDriver: incDriver,
+            includeZeroExcess: incZero
+        };
+
+        try {
+            const resp = await fetch('/Booking/CalculatePrice', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!resp.ok) return;
+            const data = await resp.json();
+
+            document.getElementById('summaryDuration').textContent = `Base Rental (${data.rentalDays} days)`;
+            document.getElementById('summaryGross').textContent = '$' + data.grossBaseCost.toFixed(2);
+
+            const discountLine = document.getElementById('discountLine');
+            if (data.durationDiscountPercent > 0) {
+                discountLine.style.display = 'flex';
+                document.getElementById('summaryDiscountLabel').textContent = `Duration Discount (${data.durationDiscountPercent}%)`;
+                document.getElementById('summaryDiscount').textContent = '-$' + data.discountAmount.toFixed(2);
+            } else {
+                discountLine.style.display = 'none';
+            }
+
+            document.getElementById('summaryExtras').textContent = '$' + data.extrasTotal.toFixed(2);
+            document.getElementById('summarySubtotal').textContent = '$' + data.subTotal.toFixed(2);
+            document.getElementById('summaryTax').textContent = '$' + data.taxAmount.toFixed(2);
+            document.getElementById('summaryDeposit').textContent = '$' + data.securityDeposit.toFixed(2);
+            document.getElementById('summaryTotal').textContent = '$' + data.totalAmount.toFixed(2) + ' NZD';
+        } catch (e) {
+            console.error('Pricing calculation error:', e);
+        }
+    }
+
+    document.querySelectorAll('.date-input, .extra-toggle').forEach(el => {
+        el.addEventListener('change', updatePricing);
+    });
+</script>
+}

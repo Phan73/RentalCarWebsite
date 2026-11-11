@@ -1,0 +1,149 @@
+@model IEnumerable<ProjectPartB.Models.Booking>
+@{
+    ViewData["Title"] = "My Reservations — Customer Dashboard";
+}
+
+<div class="py-4 bg-white border-bottom mb-4">
+    <div class="container">
+        <span class="text-uppercase fw-bold text-muted small" style="letter-spacing: 0.05em;">Customer Account Portal</span>
+        <h1 class="h2 fw-bold mb-0">My Rental Reservations</h1>
+    </div>
+</div>
+
+<div class="container pb-5">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            @TempData["ErrorMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (!Model.Any())
+    {
+        <div class="p-5 text-center bg-white rounded-3 border">
+            <svg width="48" height="48" fill="none" stroke="var(--text-muted)" class="mb-3" viewBox="0 0 24 24" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+            </svg>
+            <h4>You have no active reservations</h4>
+            <p class="text-muted small">Ready to plan your next New Zealand road journey? Explore our available fleet today.</p>
+            <a asp-controller="CarDescriptions" asp-action="Index" class="btn-brand mt-2">Browse Rental Vehicles</a>
+        </div>
+    }
+    else
+    {
+        <div class="d-flex flex-column gap-4">
+            @foreach (var booking in Model)
+            {
+                <div class="p-4 rounded-3 bg-white border shadow-sm">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center pb-3 border-bottom gap-2">
+                        <div>
+                            <span class="small text-muted text-uppercase fw-semibold">Booking Reference</span>
+                            <div class="h5 fw-bold font-monospace text-dark mb-0">@booking.BookingReference</div>
+                        </div>
+                        <div>
+                            @switch (booking.Status)
+                            {
+                                case ProjectPartB.Models.BookingStatus.Confirmed:
+                                    <span class="badge badge-status badge-confirmed">Confirmed</span>
+                                    break;
+                                case ProjectPartB.Models.BookingStatus.Active:
+                                    <span class="badge badge-status badge-active">On Road (Active)</span>
+                                    break;
+                                case ProjectPartB.Models.BookingStatus.Completed:
+                                    <span class="badge badge-status badge-completed">Returned & Completed</span>
+                                    break;
+                                case ProjectPartB.Models.BookingStatus.Cancelled:
+                                    <span class="badge badge-status badge-cancelled">Cancelled</span>
+                                    break;
+                                default:
+                                    <span class="badge badge-status badge-pending">Pending Review</span>
+                                    break;
+                            }
+                        </div>
+                    </div>
+
+                    <div class="row g-4 align-items-center py-3">
+                        <div class="col-md-3">
+                            @if (!string.IsNullOrEmpty(booking.CarDescription?.Image))
+                            {
+                                var imgSrc = booking.CarDescription.Image.StartsWith("http") ? booking.CarDescription.Image : Url.Content("~/uploads/" + booking.CarDescription.Image);
+                                <img src="@imgSrc" alt="@booking.CarDescription?.Brand @booking.CarDescription?.Model" class="rounded border w-100" style="height: 120px; object-fit: cover;" />
+                            }
+                        </div>
+
+                        <div class="col-md-5">
+                            <h5 class="fw-bold mb-1">@booking.CarDescription?.Brand @booking.CarDescription?.Model (@booking.CarDescription?.Year)</h5>
+                            <div class="text-secondary small mb-2">@booking.CarDescription?.Transmission &bull; @booking.CarDescription?.FuelType &bull; @booking.CarDescription?.Seats Seats</div>
+                            
+                            <div class="small">
+                                <div><strong>Pickup:</strong> @booking.PickupDateTime.ToString("dd MMM yyyy, HH:mm") &bull; @booking.PickupLocation?.Name</div>
+                                <div><strong>Return:</strong> @booking.ReturnDateTime.ToString("dd MMM yyyy, HH:mm") &bull; @booking.ReturnLocation?.Name</div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 text-md-end">
+                            <div class="text-muted small">Total Cost (@booking.RentalDays Days)</div>
+                            <div class="h4 fw-bold text-dark mb-1">$@booking.TotalAmount.ToString("N2") <span class="fs-6 fw-normal text-muted">NZD</span></div>
+                            <div class="small text-muted mb-3">Payment: @(booking.Payment?.Status ?? "Pending")</div>
+
+                            <div class="d-flex gap-2 justify-content-md-end">
+                                <a asp-action="Confirmation" asp-route-reference="@booking.BookingReference" class="btn btn-sm btn-outline-secondary">
+                                    View Receipt
+                                </a>
+
+                                @if (booking.Status == ProjectPartB.Models.BookingStatus.Confirmed)
+                                {
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal-@booking.BookingId">
+                                        Cancel
+                                    </button>
+
+                                    <!-- Cancellation Modal -->
+                                    <div class="modal fade" id="cancelModal-@booking.BookingId" tabindex="-1" aria-labelledby="cancelModalLabel-@booking.BookingId" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content text-start">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title fw-bold" id="cancelModalLabel-@booking.BookingId">Cancel Reservation</h5>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <form asp-action="Cancel" method="post">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="id" value="@booking.BookingId" />
+                                                    <div class="modal-body">
+                                                        <p class="small text-secondary mb-3">
+                                                            Are you sure you want to cancel reservation <strong>@booking.BookingReference</strong>? Per our cancellation policy, cancellations made 48+ hours prior to scheduled pickup incur no cancellation penalty.
+                                                        </p>
+                                                        <div class="mb-3">
+                                                            <label class="apex-form-label" for="reason-@booking.BookingId">Reason for Cancellation</label>
+                                                            <select class="apex-form-control" name="reason" id="reason-@booking.BookingId" required>
+                                                                <option value="Change in travel itinerary">Change in travel itinerary</option>
+                                                                <option value="Flight delayed or cancelled">Flight delayed or cancelled</option>
+                                                                <option value="Personal circumstances">Personal circumstances</option>
+                                                                <option value="Found alternative transport">Found alternative transport</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Keep Reservation</button>
+                                                        <button type="submit" class="btn btn-danger btn-sm">Confirm Cancellation</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

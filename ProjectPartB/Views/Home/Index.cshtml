@@ -1,8 +1,313 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@model ProjectPartB.Models.ViewModels.HomeViewModel
+@{
+    ViewData["Title"] = "Premium Automotive Car Rental in New Zealand";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<!-- Hero Section -->
+<section class="hero-banner">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <span class="badge px-3 py-2 rounded-pill mb-3 text-uppercase fw-bold" style="background: rgba(0, 168, 150, 0.2); color: var(--brand-teal-400); letter-spacing: 0.05em; font-size: 0.8125rem;">
+                    Pure New Zealand Road Touring
+                </span>
+                <h1 class="hero-title">Experience New Zealand with Uncompromising Luxury & Reliability.</h1>
+                <p class="hero-subtitle">
+                    Airport terminal pickup, transparent all-inclusive NZD daily rates, unlimited kilometers, and pristine modern vehicles ready for your journey across Aotearoa.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Floating Booking Search Interface -->
+<div class="container">
+    <div class="booking-search-card">
+        <form asp-controller="CarDescriptions" asp-action="Index" method="get">
+            <div class="row g-3 align-items-end">
+                <div class="col-lg-3 col-md-6">
+                    <label class="apex-form-label" for="pickupLoc">Pickup Location</label>
+                    <select class="apex-form-control" id="pickupLoc" name="pickupLocationId">
+                        @foreach (var loc in Model.Locations)
+                        {
+                            <option value="@loc.LocationId">@loc.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-lg-3 col-md-6">
+                    <label class="apex-form-label" for="returnLoc">Return Location</label>
+                    <select class="apex-form-control" id="returnLoc" name="returnLocationId">
+                        @foreach (var loc in Model.Locations)
+                        {
+                            <option value="@loc.LocationId">@loc.Name</option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-lg-2 col-md-6">
+                    <label class="apex-form-label" for="pickupDate">Pickup Date & Time</label>
+                    <input type="datetime-local" class="apex-form-control" id="pickupDate" name="pickupDateTime" value="@Model.DefaultPickupDate.ToString("yyyy-MM-ddTHH:mm")" />
+                </div>
+
+                <div class="col-lg-2 col-md-6">
+                    <label class="apex-form-label" for="returnDate">Return Date & Time</label>
+                    <input type="datetime-local" class="apex-form-control" id="returnDate" name="returnDateTime" value="@Model.DefaultReturnDate.ToString("yyyy-MM-ddTHH:mm")" />
+                </div>
+
+                <div class="col-lg-2 col-md-12">
+                    <button type="submit" class="btn-brand w-100 py-3" style="font-size: 1rem;">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        Find Vehicles
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
+
+<!-- Category Highlights -->
+<section class="py-5 mt-4">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div>
+                <span class="text-uppercase fw-bold text-muted small" style="letter-spacing: 0.05em;">Curated Categories</span>
+                <h2 class="mb-0">Choose Your Driving Style</h2>
+            </div>
+            <a asp-controller="CarDescriptions" asp-action="Index" class="btn-outline-brand d-none d-md-inline-flex">
+                Explore Full Fleet
+            </a>
+        </div>
+
+        <div class="row g-3">
+            @foreach (var cat in Model.Categories)
+            {
+                <div class="col-lg col-md-4 col-sm-6">
+                    <a asp-controller="CarDescriptions" asp-action="Index" asp-route-categoryId="@cat.Id" class="text-decoration-none">
+                        <div class="p-4 rounded-3 h-100" style="background: #ffffff; border: 1.5px solid var(--border-subtle); transition: all var(--transition-fast);">
+                            <div class="d-flex align-items-center justify-content-between mb-2">
+                                <h5 class="mb-0 text-dark">@cat.Name</h5>
+                                <svg width="20" height="20" fill="none" stroke="var(--brand-teal-500)" viewBox="0 0 24 24" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path>
+                                </svg>
+                            </div>
+                            <p class="text-muted small mb-0">@(cat.Description ?? "Premium vehicles available for instant reservation.")</p>
+                        </div>
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Featured Fleet Section -->
+<section class="py-5" style="background-color: #f1f5f9;">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-end mb-4">
+            <div>
+                <span class="text-uppercase fw-bold text-muted small" style="letter-spacing: 0.05em;">Hand-Picked Vehicles</span>
+                <h2 class="mb-0">Featured Fleet</h2>
+            </div>
+            <a asp-controller="CarDescriptions" asp-action="Index" class="text-teal fw-semibold">View all vehicles &rarr;</a>
+        </div>
+
+        <div class="row g-4">
+            @foreach (var car in Model.FeaturedVehicles)
+            {
+                <div class="col-lg-4 col-md-6">
+                    <div class="vehicle-card">
+                        <div class="vehicle-card-img-wrapper">
+                            @if (!string.IsNullOrEmpty(car.Image) && (car.Image.StartsWith("http") || car.Image.EndsWith(".jpg") || car.Image.EndsWith(".png") || car.Image.EndsWith(".jfif")))
+                            {
+                                var imgSrc = car.Image.StartsWith("http") ? car.Image : Url.Content("~/uploads/" + car.Image);
+                                <img src="@imgSrc" alt="@car.Brand @car.Model" class="vehicle-card-img" loading="lazy" />
+                            }
+                            else
+                            {
+                                <div class="text-center p-4 text-muted">
+                                    <svg width="48" height="48" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 17a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4M3 13h18M5 17h14a2 2 0 002-2v-3a2 2 0 00-.59-1.41L17 7.17A2 2 0 0015.59 6.5H8.41a2 2 0 00-1.41.67L3.59 10.59A2 2 0 003 12v3a2 2 0 002 2z"></path>
+                                    </svg>
+                                    <div class="small mt-2">@car.Brand @car.Model</div>
+                                </div>
+                            }
+                            <span class="vehicle-category-badge">@(car.CarType?.Name ?? car.CarTypeName)</span>
+                            @if (car.Featured)
+                            {
+                                <span class="vehicle-featured-badge">Featured</span>
+                            }
+                        </div>
+
+                        <div class="vehicle-card-body">
+                            <h3 class="vehicle-card-title">@car.Brand @car.Model</h3>
+                            <div class="vehicle-card-subtitle">Year @car.Year &bull; @car.Color</div>
+
+                            <div class="vehicle-specs-grid">
+                                <div class="spec-chip">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                                    </svg>
+                                    <span>@car.Transmission</span>
+                                </div>
+                                <div class="spec-chip">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                                    </svg>
+                                    <span>@car.FuelType</span>
+                                </div>
+                                <div class="spec-chip">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                                        <circle cx="9" cy="7" r="4"></circle>
+                                    </svg>
+                                    <span>@car.Seats Seats</span>
+                                </div>
+                                <div class="spec-chip">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                                        <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                                    </svg>
+                                    <span>@car.Luggage Luggage</span>
+                                </div>
+                            </div>
+
+                            <p class="text-muted small mb-3 text-truncate" style="max-height: 40px;">
+                                @car.Description
+                            </p>
+
+                            <div class="vehicle-pricing-row">
+                                <div>
+                                    <span class="vehicle-price-val">$@car.RatePerDay.ToString("N2")</span>
+                                    <span class="vehicle-price-period">NZD / day</span>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <a asp-controller="CarDescriptions" asp-action="Details" asp-route-id="@car.CarDescriptionId" class="btn btn-sm btn-outline-secondary">
+                                        Details
+                                    </a>
+                                    <a asp-controller="Booking" asp-action="Reserve" asp-route-carId="@car.CarDescriptionId" class="btn btn-sm btn-brand">
+                                        Book Now
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Why Choose Us -->
+<section class="py-5">
+    <div class="container">
+        <div class="text-center max-w-xl mx-auto mb-5">
+            <span class="text-uppercase fw-bold text-muted small" style="letter-spacing: 0.05em;">Commercial Reliability</span>
+            <h2>Why New Zealand Travelers Trust Apex</h2>
+            <p class="text-muted">Direct airport pickup, brand-new late-model fleet, and clear transparent pricing with no hidden surcharges.</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-md-3">
+                <div class="p-4 rounded-3 h-100" style="background: #ffffff; border: 1px solid var(--border-subtle);">
+                    <div class="metric-icon-box primary mb-3">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h5 class="fw-bold">No Hidden Fees</h5>
+                    <p class="text-muted small mb-0">What you see is what you pay. Standard comprehensive insurance and 15% NZ GST are fully itemized upfront.</p>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="p-4 rounded-3 h-100" style="background: #ffffff; border: 1px solid var(--border-subtle);">
+                    <div class="metric-icon-box navy mb-3">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </div>
+                    <h5 class="fw-bold">Airport Terminal Desks</h5>
+                    <p class="text-muted small mb-0">Collect your keys right at Auckland, Wellington, Christchurch, and Queenstown Airport terminals without shuttle wait times.</p>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="p-4 rounded-3 h-100" style="background: #ffffff; border: 1px solid var(--border-subtle);">
+                    <div class="metric-icon-box success mb-3">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                        </svg>
+                    </div>
+                    <h5 class="fw-bold">24/7 AA Roadside Assist</h5>
+                    <p class="text-muted small mb-0">Travel anywhere across the North and South Islands with complete peace of mind knowing New Zealand AA support is on call.</p>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="p-4 rounded-3 h-100" style="background: #ffffff; border: 1px solid var(--border-subtle);">
+                    <div class="metric-icon-box primary mb-3">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <h5 class="fw-bold">Free Cancellation</h5>
+                    <p class="text-muted small mb-0">Plans change. Cancel your online booking free of charge up to 48 hours prior to scheduled pickup time.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="py-5" style="background: #ffffff; border-top: 1px solid var(--border-subtle);">
+    <div class="container max-w-2xl">
+        <div class="text-center mb-5">
+            <span class="text-uppercase fw-bold text-muted small" style="letter-spacing: 0.05em;">Got Questions?</span>
+            <h2>Frequently Asked Questions</h2>
+        </div>
+
+        <div class="accordion" id="apexFaqAccordion">
+            <div class="accordion-item border-0 border-bottom">
+                <h2 class="accordion-header" id="headingOne">
+                    <button class="accordion-button fw-bold py-3 text-dark bg-transparent shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                        What documents do I need to collect my rental car?
+                    </button>
+                </h2>
+                <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#apexFaqAccordion">
+                    <div class="accordion-body text-secondary small pt-0 pb-3">
+                        You will need a current and valid driver's licence. Overseas visitors must hold a licence printed in English, or bring an official International Driving Permit (IDP) alongside their national licence. You also need a major credit card or debit card in the primary renter's name.
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item border-0 border-bottom">
+                <h2 class="accordion-header" id="headingTwo">
+                    <button class="accordion-button collapsed fw-bold py-3 text-dark bg-transparent shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                        Are unlimited kilometers included with every rental?
+                    </button>
+                </h2>
+                <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#apexFaqAccordion">
+                    <div class="accordion-body text-secondary small pt-0 pb-3">
+                        Yes! All standard rentals across our passenger vehicles, SUVs, and electric fleet come with 100% unlimited kilometers so you can tour New Zealand without distance anxiety.
+                    </div>
+                </div>
+            </div>
+
+            <div class="accordion-item border-0 border-bottom">
+                <h2 class="accordion-header" id="headingThree">
+                    <button class="accordion-button collapsed fw-bold py-3 text-dark bg-transparent shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                        Can I take my rental vehicle between the North and South Islands on the ferry?
+                    </button>
+                </h2>
+                <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#apexFaqAccordion">
+                    <div class="accordion-body text-secondary small pt-0 pb-3">
+                        Yes, our vehicles can be taken across the Cook Strait ferry between Wellington and Picton. Alternatively, you can drop off your vehicle at our Wellington branch and collect a fresh vehicle upon arrival at Picton ferry terminal.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

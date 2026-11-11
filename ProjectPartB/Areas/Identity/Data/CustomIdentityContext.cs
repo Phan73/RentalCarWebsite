@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using ProjectPartB.Areas.Identity.Data;
@@ -16,111 +16,73 @@ public class CustomIdentityContext : IdentityDbContext<WebUser>
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
-       
         base.OnModelCreating(builder);
-      
-        // Create ROLES
-        List<IdentityRole> roles = new List<IdentityRole>() {
-          new IdentityRole { Name = "Administrator", NormalizedName = "ADMINISTRATOR" },
-          new IdentityRole { Name = "Manager", NormalizedName = "MANAGER" },
-         new IdentityRole { Name = "Editor", NormalizedName = "EDITOR" },
-          new IdentityRole { Name = "Visitor", NormalizedName = "VISITOR" }
-          };
+
+        // Configure Membership One-to-One
+        builder.Entity<Membership>()
+            .HasOne(m => m.User)
+            .WithOne(u => u.Membership)
+            .HasForeignKey<Membership>(m => m.UserId);
+
+        // Seed Roles
+        var adminRoleId = "a1-role-admin";
+        var managerRoleId = "a2-role-manager";
+        var staffRoleId = "a3-role-staff";
+        var customerRoleId = "a4-role-customer";
+
+        var roles = new List<IdentityRole>
+        {
+            new IdentityRole { Id = adminRoleId, Name = "Administrator", NormalizedName = "ADMINISTRATOR" },
+            new IdentityRole { Id = managerRoleId, Name = "Manager", NormalizedName = "MANAGER" },
+            new IdentityRole { Id = staffRoleId, Name = "Staff", NormalizedName = "STAFF" },
+            new IdentityRole { Id = customerRoleId, Name = "Customer", NormalizedName = "CUSTOMER" }
+        };
         builder.Entity<IdentityRole>().HasData(roles);
-         builder.Entity<WebUser>()
-        .HasOne(u => u.Membership)                                    
-        .WithOne(m => m.User)
-        .HasForeignKey<WebUser>(u => u.MembershipId);
-        builder.Entity<WebUser>()
-    .Property(u => u.UserID)
 
-    .HasDefaultValueSql("NEWID()");
-        // Create USERS
+        // Seed Users
         var passwordHasher = new PasswordHasher<WebUser>();
-        List<WebUser> users = new List<WebUser>() {
-             new WebUser {
-                 
-                 FullName="Admin",
-                 Address="admin",
-                 Phone="0210888888",
-                 DrivingLicense="fads213",
-                 UserName = "administrator@example.com",
-                 NormalizedUserName = "ADMINISTRATOR@EXAMPLE.COM",
-                 Email = "administrator@example.com",
-                 NormalizedEmail = "ADMINISTRATOR@EXAMPLE.COM",
-                 EmailConfirmed=true,
-             },
-             new WebUser {
 
-                 
+        var adminId = "u1-admin-user";
+        var managerId = "u2-manager-user";
 
-                 FullName="manager",                         
-
-                 Address="manager",
-                 Phone="0210888888",
-                 DrivingLicense="fads213",
-                 UserName = "manager@example.com",
-                 NormalizedUserName = "MANAGER@EXAMPLE.COM",
-                 Email = "manager@example.com",
-                 NormalizedEmail = "MANAGER@EXAMPLE.COM",
-                 EmailConfirmed=true
-             },
-             new WebUser {
-                 
-                 FullName="editor",
-                 Address="editor",
-                 Phone="0210888888",
-                 DrivingLicense = "fads213",
-                 UserName = "editor@example.com",
-                 NormalizedUserName = "EDITOR@EXAMPLE.COM",
-                 Email = "editor@example.com",
-                 NormalizedEmail = "EDITOR@EXAMPLE.COM",
-                 EmailConfirmed=true
-             },
-             new WebUser {
-                 
-                 FullName="visitor",
-                 Address="visitor",
-                 Phone="0210888888",
-                 DrivingLicense = "fads213",
-                 UserName = "visitor@example.com",
-                 NormalizedUserName = "VISITOR@EXAMPLE.COM",
-                 Email = "visitor@example.com",
-                 NormalizedEmail = "VISITOR@EXAMPLE.COM",
-                 EmailConfirmed=true
-             }
-         };
-        builder.Entity<WebUser>().HasData(users);
-
-        // Add password to users
-        //var passwordHasher = new PasswordHasher<IdentityUser>();
-        users[0].PasswordHash = passwordHasher.HashPassword(users[0], "Password@123");
-        users[1].PasswordHash = passwordHasher.HashPassword(users[1], "Password@123");
-        users[2].PasswordHash = passwordHasher.HashPassword(users[2], "Password@123");
-        users[3].PasswordHash = passwordHasher.HashPassword(users[3], "Password@123");
-
-        // Add roles to user
-        List<IdentityUserRole<string>> userRoles = new List<IdentityUserRole<string>>();
-        userRoles.Add(new IdentityUserRole<string>
+        var admin = new WebUser
         {
-            UserId = users[0].Id,
-            RoleId = roles.First(q => q.Name == "Administrator").Id
-        });
-        userRoles.Add(new IdentityUserRole<string>
+            Id = adminId,
+            FullName = "Apex Operations Lead",
+            Address = "100 Queen Street, Auckland CBD",
+            Phone = "+64 9 300 1234",
+            DrivingLicense = "DL-NZ-982341",
+            UserName = "administrator@example.com",
+            NormalizedUserName = "ADMINISTRATOR@EXAMPLE.COM",
+            Email = "administrator@example.com",
+            NormalizedEmail = "ADMINISTRATOR@EXAMPLE.COM",
+            EmailConfirmed = true,
+            SecurityStamp = Guid.NewGuid().ToString()
+        };
+        admin.PasswordHash = passwordHasher.HashPassword(admin, "Password@123");
+
+        var manager = new WebUser
         {
-            UserId = users[1].Id,
-            RoleId = roles.First(q => q.Name == "Manager").Id
-        });
-        userRoles.Add(new IdentityUserRole<string>
-        {
-            UserId = users[2].Id,
-            RoleId = roles.First(q => q.Name == "Editor").Id
-        });
-        userRoles.Add(new IdentityUserRole<string>
-        {
-            UserId = users[3].Id,
-            RoleId = roles.First(q => q.Name == "Visitor").Id
-        });
-        builder.Entity<IdentityUserRole<string>>().HasData(userRoles);
+            Id = managerId,
+            FullName = "Fleet Manager",
+            Address = "Ray Emery Drive, Auckland Airport",
+            Phone = "+64 9 275 0789",
+            DrivingLicense = "DL-NZ-124982",
+            UserName = "manager@example.com",
+            NormalizedUserName = "MANAGER@EXAMPLE.COM",
+            Email = "manager@example.com",
+            NormalizedEmail = "MANAGER@EXAMPLE.COM",
+            EmailConfirmed = true,
+            SecurityStamp = Guid.NewGuid().ToString()
+        };
+        manager.PasswordHash = passwordHasher.HashPassword(manager, "Password@123");
+
+        builder.Entity<WebUser>().HasData(admin, manager);
+
+        // Seed UserRoles
+        builder.Entity<IdentityUserRole<string>>().HasData(
+            new IdentityUserRole<string> { UserId = adminId, RoleId = adminRoleId },
+            new IdentityUserRole<string> { UserId = managerId, RoleId = managerRoleId }
+        );
     }
 }

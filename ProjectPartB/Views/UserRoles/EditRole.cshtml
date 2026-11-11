@@ -1,15 +1,28 @@
-﻿@model ProjectPartB.Models.EditRoleViewModel
+@model ProjectPartB.Models.EditRoleViewModel
+@{
+    ViewData["Title"] = "Edit System Role";
+}
 
-<h1>Edit Role</h1>
+<div class="container py-5">
+    <div class="max-w-xl mx-auto">
+        <div class="p-4 rounded-3 bg-white border shadow-sm">
+            <h3 class="fw-bold mb-3">Edit Role Name</h3>
+            <form asp-action="EditRole" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="RoleId" />
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-3"></div>
 
-<form asp-action="EditRole">
-    <input type="hidden" asp-for="RoleId" />
+                <div class="mb-4">
+                    <label class="apex-form-label" asp-for="RoleName">Role Name</label>
+                    <input class="apex-form-control" asp-for="RoleName" required />
+                    <span asp-validation-for="RoleName" class="text-danger small"></span>
+                </div>
 
-    <div>
-        <label for="RoleName">Role Name:</label>
-        <input type="text" id="RoleName" name="RoleName" value="@Model.RoleName" />
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn-brand">Save Changes</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
     </div>
-    <div>
-        <button type="submit">Save</button>
-    </div>
-</form>
+</div>

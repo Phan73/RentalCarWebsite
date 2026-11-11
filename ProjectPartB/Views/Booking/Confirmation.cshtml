@@ -1,0 +1,152 @@
+@model ProjectPartB.Models.Booking
+@{
+    ViewData["Title"] = $"Reservation Confirmed — {Model.BookingReference}";
+}
+
+<div class="py-5 bg-white border-bottom mb-4">
+    <div class="container text-center max-w-xl">
+        <div class="metric-icon-box success mx-auto mb-3" style="width: 64px; height: 64px;">
+            <svg width="32" height="32" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+            </svg>
+        </div>
+        <span class="badge px-3 py-1 rounded-pill mb-2 fw-bold" style="background: var(--status-success-bg); color: var(--status-success-text); border: 1px solid var(--status-success-border);">
+            Booking Confirmed
+        </span>
+        <h1 class="display-6 fw-bold mb-2">You're All Set to Drive!</h1>
+        <p class="text-secondary mb-3">
+            A confirmation receipt has been sent to <strong>@Model.CustomerEmail</strong>. Please present your booking reference upon vehicle collection.
+        </p>
+        <div class="p-3 rounded bg-light border d-inline-block px-4">
+            <span class="text-muted small text-uppercase fw-bold d-block">Booking Reference</span>
+            <span class="h3 fw-bold text-dark font-monospace mb-0">@Model.BookingReference</span>
+        </div>
+    </div>
+</div>
+
+<div class="container pb-5">
+    <div class="row g-4 justify-content-center">
+        <div class="col-lg-8">
+            <!-- Reservation Details Card -->
+            <div class="p-4 rounded-3 bg-white border mb-4 shadow-sm">
+                <h4 class="fw-bold mb-3 pb-2 border-bottom">Reservation Itinerary</h4>
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <div class="small text-muted text-uppercase fw-semibold">Pickup Depot & Schedule</div>
+                        <div class="fw-bold fs-6 mt-1">@Model.PickupLocation?.Name</div>
+                        <div class="text-secondary small">@Model.PickupLocation?.Address, @Model.PickupLocation?.City</div>
+                        <div class="fw-semibold text-teal mt-2">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" class="me-1">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            @Model.PickupDateTime.ToString("ddd, dd MMM yyyy @ HH:mm")
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="small text-muted text-uppercase fw-semibold">Return Depot & Schedule</div>
+                        <div class="fw-bold fs-6 mt-1">@Model.ReturnLocation?.Name</div>
+                        <div class="text-secondary small">@Model.ReturnLocation?.Address, @Model.ReturnLocation?.City</div>
+                        <div class="fw-semibold text-teal mt-2">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" class="me-1">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            @Model.ReturnDateTime.ToString("ddd, dd MMM yyyy @ HH:mm")
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-top row g-3">
+                    <div class="col-sm-6">
+                        <div class="small text-muted text-uppercase fw-semibold">Renter Name</div>
+                        <div class="fw-semibold">@Model.CustomerName</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="small text-muted text-uppercase fw-semibold">Driver's Licence Number</div>
+                        <div class="fw-semibold font-monospace">@Model.DriverLicenseNumber</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vehicle Summary -->
+            <div class="p-4 rounded-3 bg-white border mb-4 shadow-sm">
+                <div class="d-flex align-items-center gap-3">
+                    @if (!string.IsNullOrEmpty(Model.CarDescription?.Image))
+                    {
+                        var imgSrc = Model.CarDescription.Image.StartsWith("http") ? Model.CarDescription.Image : Url.Content("~/uploads/" + Model.CarDescription.Image);
+                        <img src="@imgSrc" alt="@Model.CarDescription?.Brand @Model.CarDescription?.Model" class="rounded border" style="width: 120px; height: 90px; object-fit: cover;" />
+                    }
+                    <div>
+                        <span class="badge bg-light text-dark border mb-1">@(Model.CarDescription?.CarType?.Name ?? Model.CarDescription?.CarTypeName)</span>
+                        <h4 class="fw-bold mb-0">@Model.CarDescription?.Brand @Model.CarDescription?.Model</h4>
+                        <div class="text-muted small">@Model.CarDescription?.Transmission &bull; @Model.CarDescription?.FuelType &bull; @Model.CarDescription?.Seats Seats &bull; Color: @Model.CarDescription?.Color</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Financial Receipt -->
+            <div class="receipt-card mb-4">
+                <h4 class="fw-bold mb-3">Tax Invoice & Financial Summary</h4>
+                <div class="receipt-line">
+                    <span>Base Vehicle Rental (@Model.RentalDays days at $@Model.DailyRate.ToString("N2"))</span>
+                    <span class="fw-semibold">$@((Model.DailyRate * Model.RentalDays).ToString("N2"))</span>
+                </div>
+                @if (Model.DiscountAmount > 0)
+                {
+                    <div class="receipt-line text-success">
+                        <span>Duration Discount (@Model.DurationDiscountPercent%)</span>
+                        <span class="fw-semibold">-$@Model.DiscountAmount.ToString("N2")</span>
+                    </div>
+                }
+                @foreach (var extra in Model.BookingExtras)
+                {
+                    <div class="receipt-line">
+                        <span>@extra.Name (@extra.Quantity &times; $@extra.DailyPrice.ToString("N2")/day)</span>
+                        <span class="fw-semibold">$@extra.TotalPrice.ToString("N2")</span>
+                    </div>
+                }
+                <div class="receipt-line">
+                    <span>Subtotal</span>
+                    <span class="fw-semibold">$@Model.SubTotal.ToString("N2")</span>
+                </div>
+                <div class="receipt-line">
+                    <span>15% New Zealand GST</span>
+                    <span class="fw-semibold">$@Model.TaxAmount.ToString("N2")</span>
+                </div>
+                <div class="receipt-line">
+                    <span>Refundable Security Deposit</span>
+                    <span class="fw-semibold">$@Model.SecurityDeposit.ToString("N2")</span>
+                </div>
+                <div class="receipt-line total">
+                    <span>Total Amount</span>
+                    <span>$@Model.TotalAmount.ToString("N2") NZD</span>
+                </div>
+
+                <div class="mt-3 pt-3 border-top d-flex justify-content-between align-items-center">
+                    <span class="small text-muted">Payment Method: <strong>@(Model.Payment?.PaymentMethod ?? "Pay at Pickup")</strong></span>
+                    <span class="badge badge-status @(Model.Payment?.Status == "Paid" ? "badge-confirmed" : "badge-pending")">
+                        @(Model.Payment?.Status ?? "Pending")
+                    </span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex gap-3 justify-content-between">
+                <button type="button" class="btn btn-outline-secondary" onclick="window.print();">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" class="me-1">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                    </svg>
+                    Print Tax Invoice
+                </button>
+                <div class="d-flex gap-2">
+                    <a asp-controller="Booking" asp-action="MyBookings" class="btn btn-outline-brand">
+                        View All My Reservations
+                    </a>
+                    <a asp-controller="Home" asp-action="Index" class="btn-brand">
+                        Return to Homepage
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

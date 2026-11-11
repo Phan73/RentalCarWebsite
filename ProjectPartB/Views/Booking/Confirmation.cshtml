@@ -73,7 +73,7 @@
                 <div class="d-flex align-items-center gap-3">
                     @if (!string.IsNullOrEmpty(Model.CarDescription?.Image))
                     {
-                        var imgSrc = Model.CarDescription.Image.StartsWith("http") ? Model.CarDescription.Image : Url.Content("~/uploads/" + Model.CarDescription.Image);
+                        var imgSrc = (Model.CarDescription.Image.StartsWith("http") || Model.CarDescription.Image.StartsWith("data:")) ? Model.CarDescription.Image : Url.Content("~/uploads/" + Model.CarDescription.Image);
                         <img src="@imgSrc" alt="@Model.CarDescription?.Brand @Model.CarDescription?.Model" class="rounded border" style="width: 120px; height: 90px; object-fit: cover;" />
                     }
                     <div>

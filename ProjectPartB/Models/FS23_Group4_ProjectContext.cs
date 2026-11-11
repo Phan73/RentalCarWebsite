@@ -47,7 +47,7 @@ namespace ProjectPartB.Models
 
                 entity.Property(e => e.Available).HasDefaultValue(true);
                 entity.Property(e => e.Brand).HasMaxLength(50);
-                entity.Property(e => e.Color).HasMaxLength(20);
+                entity.Property(e => e.Color).HasMaxLength(50);
                 entity.Property(e => e.Description).HasMaxLength(500);
                 entity.Property(e => e.Model).HasMaxLength(50);
                 entity.Property(e => e.RatePerDay).HasColumnType("decimal(10, 2)");

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -261,6 +262,109 @@ namespace ProjectPartB.Tests
 
             Directory.Delete(dir1.FullName, true);
             Directory.Delete(dir2.FullName, true);
+        }
+
+        [Fact]
+        public async Task CarDescriptionsController_Create_WithImageFile_SuccessfullySavesVehicle()
+        {
+            var fleetService = new FleetService(_context);
+            var pricingService = new PricingService();
+            var mockEnv = new Mock<IWebHostEnvironment>();
+            mockEnv.Setup(e => e.WebRootPath).Returns(Path.GetTempPath());
+
+            var controller = new CarDescriptionsController(_context, fleetService, pricingService, mockEnv.Object);
+            controller.TempData = new TempDataDictionary(new DefaultHttpContext(), Mock.Of<ITempDataProvider>());
+
+            var mockFile = new Mock<IFormFile>();
+            var content = new byte[] { 0xFF, 0xD8, 0xFF, 0xE0, 0x00, 0x10, 0x4A, 0x46, 0x49, 0x46 };
+            mockFile.Setup(f => f.FileName).Returns("toyota.jpg");
+            mockFile.Setup(f => f.Length).Returns(content.Length);
+            mockFile.Setup(f => f.CopyToAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
+                .Returns((Stream target, CancellationToken _) => target.WriteAsync(content, 0, content.Length));
+
+            var newCar = new CarDescription
+            {
+                Brand = "Toyota",
+                Model = "RAV4 Hybrid",
+                CarTypeId = 1,
+                RatePerDay = 115.00m,
+                Color = "Pearl White Multi-Coat",
+                Description = "Spacious all-wheel drive SUV",
+                Seats = 5,
+                Luggage = 3,
+                Year = 2024
+            };
+
+            var result = await controller.Create(newCar, mockFile.Object);
+
+            var redirect = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal(nameof(CarDescriptionsController.Index), redirect.ActionName);
+
+            var saved = await _context.CarDescriptions.FirstOrDefaultAsync(c => c.Brand == "Toyota");
+            Assert.NotNull(saved);
+            Assert.Equal("RAV4 Hybrid", saved.Model);
+            Assert.Equal("Sedan", saved.CarTypeName); // Matched from CarTypeId = 1
+            Assert.StartsWith("data:image/jpeg;base64,", saved.Image);
+        }
+
+        [Fact]
+        public async Task CarDescriptionsController_Edit_WithNewImageFile_UpdatesVehicleAndImage()
+        {
+            var fleetService = new FleetService(_context);
+            var pricingService = new PricingService();
+            var mockEnv = new Mock<IWebHostEnvironment>();
+            mockEnv.Setup(e => e.WebRootPath).Returns(Path.GetTempPath());
+
+            var controller = new CarDescriptionsController(_context, fleetService, pricingService, mockEnv.Object);
+            controller.TempData = new TempDataDictionary(new DefaultHttpContext(), Mock.Of<ITempDataProvider>());
+
+            var mockFile = new Mock<IFormFile>();
+            var content = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }; // PNG magic bytes
+            mockFile.Setup(f => f.FileName).Returns("updated-audi.png");
+            mockFile.Setup(f => f.Length).Returns(content.Length);
+            mockFile.Setup(f => f.CopyToAsync(It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
+                .Returns((Stream target, CancellationToken _) => target.WriteAsync(content, 0, content.Length));
+
+            var existingCar = await _context.CarDescriptions.FirstAsync(c => c.Brand == "Audi");
+            existingCar.RatePerDay = 145.00m;
+            existingCar.Color = "Daytona Gray Pearl Effect"; // Long realistic color name > 20 chars
+
+            var result = await controller.Edit(existingCar.CarDescriptionId, existingCar, mockFile.Object);
+
+            var redirect = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal(nameof(CarDescriptionsController.Index), redirect.ActionName);
+
+            var updated = await _context.CarDescriptions.FindAsync(existingCar.CarDescriptionId);
+            Assert.NotNull(updated);
+            Assert.Equal(145.00m, updated.RatePerDay);
+            Assert.Equal("Daytona Gray Pearl Effect", updated.Color);
+            Assert.StartsWith("data:image/png;base64,", updated.Image);
+        }
+
+        [Fact]
+        public async Task CarDescriptionsController_Edit_WithoutNewImage_PreservesExistingImage()
+        {
+            var fleetService = new FleetService(_context);
+            var pricingService = new PricingService();
+            var mockEnv = new Mock<IWebHostEnvironment>();
+            mockEnv.Setup(e => e.WebRootPath).Returns(Path.GetTempPath());
+
+            var controller = new CarDescriptionsController(_context, fleetService, pricingService, mockEnv.Object);
+            controller.TempData = new TempDataDictionary(new DefaultHttpContext(), Mock.Of<ITempDataProvider>());
+
+            var existingCar = await _context.CarDescriptions.FirstAsync(c => c.Brand == "Audi");
+            var originalImage = existingCar.Image;
+            existingCar.Model = "A4 Avant Quattro";
+
+            var result = await controller.Edit(existingCar.CarDescriptionId, existingCar, null);
+
+            var redirect = Assert.IsType<RedirectToActionResult>(result);
+            Assert.Equal(nameof(CarDescriptionsController.Index), redirect.ActionName);
+
+            var updated = await _context.CarDescriptions.FindAsync(existingCar.CarDescriptionId);
+            Assert.NotNull(updated);
+            Assert.Equal("A4 Avant Quattro", updated.Model);
+            Assert.Equal(originalImage, updated.Image); // Preserved!
         }
     }
 }

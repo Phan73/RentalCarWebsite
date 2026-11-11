@@ -119,9 +119,9 @@
                 <div class="col-lg-4 col-md-6">
                     <div class="vehicle-card">
                         <div class="vehicle-card-img-wrapper">
-                            @if (!string.IsNullOrEmpty(car.Image) && (car.Image.StartsWith("http") || car.Image.EndsWith(".jpg") || car.Image.EndsWith(".png") || car.Image.EndsWith(".jfif")))
+                            @if (!string.IsNullOrEmpty(car.Image))
                             {
-                                var imgSrc = car.Image.StartsWith("http") ? car.Image : Url.Content("~/uploads/" + car.Image);
+                                var imgSrc = (car.Image.StartsWith("http") || car.Image.StartsWith("data:")) ? car.Image : Url.Content("~/uploads/" + car.Image);
                                 <img src="@imgSrc" alt="@car.Brand @car.Model" class="vehicle-card-img" loading="lazy" />
                             }
                             else

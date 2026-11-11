@@ -24,6 +24,13 @@
 </div>
 
 <div class="container pb-5">
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+            @TempData["SuccessMessage"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
     @if (TempData["ErrorMessage"] != null)
     {
         <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
@@ -138,9 +145,9 @@
                         <div class="col-md-6 col-xl-4">
                             <div class="vehicle-card">
                                 <div class="vehicle-card-img-wrapper">
-                                    @if (!string.IsNullOrEmpty(car.Image) && (car.Image.StartsWith("http") || car.Image.EndsWith(".jpg") || car.Image.EndsWith(".png") || car.Image.EndsWith(".jfif") || car.Image.EndsWith(".webp")))
+                                    @if (!string.IsNullOrEmpty(car.Image))
                                     {
-                                        var imgSrc = car.Image.StartsWith("http") ? car.Image : Url.Content("~/uploads/" + car.Image);
+                                        var imgSrc = (car.Image.StartsWith("http") || car.Image.StartsWith("data:")) ? car.Image : Url.Content("~/uploads/" + car.Image);
                                         <img src="@imgSrc" alt="@car.Brand @car.Model" class="vehicle-card-img" loading="lazy" />
                                     }
                                     else

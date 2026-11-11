@@ -17,8 +17,7 @@
             <form asp-action="Edit" enctype="multipart/form-data" method="post">
                 @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="CarDescriptionId" />
-                <input type="hidden" asp-for="Image" />
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4"></div>
+                <div asp-validation-summary="All" class="alert alert-danger mb-4"></div>
 
                 <div class="row g-3">
                     <div class="col-md-6">
@@ -83,9 +82,25 @@
                         <span asp-validation-for="Color" class="text-danger small"></span>
                     </div>
 
-                    <div class="col-md-6">
-                        <label class="apex-form-label" for="imageFile">Replace Photo</label>
-                        <input class="apex-form-control" id="imageFile" name="imageFile" type="file" accept=".jpg,.jpeg,.png,.webp" />
+                    <div class="col-12">
+                        <label class="apex-form-label">Vehicle Photo & Imagery</label>
+                        <div class="d-flex flex-column flex-md-row align-items-md-center gap-3 p-3 bg-light rounded border mb-2">
+                            @if (!string.IsNullOrEmpty(Model.Image))
+                            {
+                                var currentImg = (Model.Image.StartsWith("http") || Model.Image.StartsWith("data:")) ? Model.Image : Url.Content("~/uploads/" + Model.Image);
+                                <img src="@currentImg" alt="@Model.Brand @Model.Model" class="rounded object-fit-cover border shadow-sm" style="width: 140px; height: 90px; object-fit: cover;" />
+                            }
+                            else
+                            {
+                                <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center" style="width: 140px; height: 90px;">No Photo</div>
+                            }
+                            <div class="flex-grow-1">
+                                <label class="apex-form-label mb-1" for="imageFile">Upload New Photo File (JPG, PNG, WEBP)</label>
+                                <input class="apex-form-control mb-2" id="imageFile" name="imageFile" type="file" accept=".jpg,.jpeg,.png,.webp" />
+                                <label class="apex-form-label mb-1" asp-for="Image">Or Photo URL (Web Link)</label>
+                                <input class="apex-form-control" asp-for="Image" placeholder="https://images.unsplash.com/... or keep current" />
+                            </div>
+                        </div>
                     </div>
 
                     <div class="col-12">

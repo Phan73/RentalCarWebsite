@@ -74,7 +74,7 @@
                         <div class="col-md-3">
                             @if (!string.IsNullOrEmpty(booking.CarDescription?.Image))
                             {
-                                var imgSrc = booking.CarDescription.Image.StartsWith("http") ? booking.CarDescription.Image : Url.Content("~/uploads/" + booking.CarDescription.Image);
+                                var imgSrc = (booking.CarDescription.Image.StartsWith("http") || booking.CarDescription.Image.StartsWith("data:")) ? booking.CarDescription.Image : Url.Content("~/uploads/" + booking.CarDescription.Image);
                                 <img src="@imgSrc" alt="@booking.CarDescription?.Brand @booking.CarDescription?.Model" class="rounded border w-100" style="height: 120px; object-fit: cover;" />
                             }
                         </div>

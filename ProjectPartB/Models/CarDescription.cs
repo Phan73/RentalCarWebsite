@@ -30,7 +30,7 @@ namespace ProjectPartB.Models
         public string? Model { get; set; }
 
         [Required(ErrorMessage = "The color is required.")]
-        [StringLength(20)]
+        [StringLength(50, ErrorMessage = "The color name cannot exceed 50 characters.")]
         public string? Color { get; set; }
 
         [Required(ErrorMessage = "The rate per day is required.")]
@@ -40,10 +40,8 @@ namespace ProjectPartB.Models
 
         public bool? Available { get; set; } = true;
 
-        [Required(ErrorMessage = "Please upload an image.")]
         public string? Image { get; set; }
 
-        [Required(ErrorMessage = "Please select the car type.")]
         public string CarTypeName { get; set; } = string.Empty;
 
         // Modern automotive rental specifications

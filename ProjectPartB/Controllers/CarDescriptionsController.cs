@@ -161,49 +161,45 @@ namespace ProjectPartB.Controllers
         {
             var categories = await _fleetService.GetActiveCategoriesAsync();
             var selectedCategory = categories.FirstOrDefault(c => c.Id == carDescription.CarTypeId);
-            if (selectedCategory != null)
-            {
-                carDescription.CarTypeName = selectedCategory.Name;
-            }
+            carDescription.CarTypeName = selectedCategory?.Name ?? "Standard";
+            ModelState.Remove(nameof(CarDescription.CarTypeName));
 
-            // Secure File Upload Validation
+            // Secure File Upload / Image Handling
             if (imageFile != null && imageFile.Length > 0)
             {
                 if (imageFile.Length > MaxFileSize)
                 {
-                    ModelState.AddModelError("Image", "Vehicle image must be under 5 MB.");
+                    ModelState.AddModelError("imageFile", "Vehicle image must be under 5 MB.");
                 }
 
                 var ext = Path.GetExtension(imageFile.FileName).ToLowerInvariant();
                 if (!AllowedExtensions.Contains(ext))
                 {
-                    ModelState.AddModelError("Image", "Only .jpg, .jpeg, .png, and .webp images are permitted.");
+                    ModelState.AddModelError("imageFile", "Only .jpg, .jpeg, .png, and .webp images are permitted.");
                 }
 
-                if (ModelState.IsValid)
+                if (imageFile.Length <= MaxFileSize && AllowedExtensions.Contains(ext))
                 {
-                    var uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
-                    if (!Directory.Exists(uploadsDir))
-                    {
-                        Directory.CreateDirectory(uploadsDir);
-                    }
-
-                    var uniqueFileName = $"{Guid.NewGuid():N}{ext}";
-                    var filePath = Path.Combine(uploadsDir, uniqueFileName);
-
-                    using (var stream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await imageFile.CopyToAsync(stream);
-                    }
-
-                    carDescription.Image = uniqueFileName;
+                    carDescription.Image = await ProcessImageUploadAsync(imageFile);
+                    ModelState.Remove(nameof(CarDescription.Image));
                 }
+            }
+            else if (!string.IsNullOrWhiteSpace(carDescription.Image))
+            {
+                ModelState.Remove(nameof(CarDescription.Image));
+            }
+            else
+            {
+                // Fallback to high quality automotive image for category
+                carDescription.Image = GetDefaultVehicleImage(carDescription.CarTypeName);
+                ModelState.Remove(nameof(CarDescription.Image));
             }
 
             if (ModelState.IsValid)
             {
                 _context.CarDescriptions.Add(carDescription);
                 await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = $"Vehicle {carDescription.Brand} {carDescription.Model} was successfully added to the fleet.";
                 return RedirectToAction(nameof(Index));
             }
 
@@ -235,43 +231,41 @@ namespace ProjectPartB.Controllers
 
             var categories = await _fleetService.GetActiveCategoriesAsync();
             var selectedCategory = categories.FirstOrDefault(c => c.Id == carDescription.CarTypeId);
-            if (selectedCategory != null)
-            {
-                carDescription.CarTypeName = selectedCategory.Name;
-            }
+            carDescription.CarTypeName = selectedCategory?.Name ?? "Standard";
+            ModelState.Remove(nameof(CarDescription.CarTypeName));
 
-            // Secure File Upload Validation
+            var existingVehicle = await _context.CarDescriptions.AsNoTracking().FirstOrDefaultAsync(c => c.CarDescriptionId == id);
+            if (existingVehicle == null) return NotFound();
+
+            // Secure File Upload / Image Handling
             if (imageFile != null && imageFile.Length > 0)
             {
                 if (imageFile.Length > MaxFileSize)
                 {
-                    ModelState.AddModelError("Image", "Vehicle image must be under 5 MB.");
+                    ModelState.AddModelError("imageFile", "Vehicle image must be under 5 MB.");
                 }
 
                 var ext = Path.GetExtension(imageFile.FileName).ToLowerInvariant();
                 if (!AllowedExtensions.Contains(ext))
                 {
-                    ModelState.AddModelError("Image", "Only .jpg, .jpeg, .png, and .webp images are permitted.");
+                    ModelState.AddModelError("imageFile", "Only .jpg, .jpeg, .png, and .webp images are permitted.");
                 }
 
-                if (ModelState.IsValid)
+                if (imageFile.Length <= MaxFileSize && AllowedExtensions.Contains(ext))
                 {
-                    var uploadsDir = Path.Combine(_webHostEnvironment.WebRootPath, "uploads");
-                    if (!Directory.Exists(uploadsDir))
-                    {
-                        Directory.CreateDirectory(uploadsDir);
-                    }
-
-                    var uniqueFileName = $"{Guid.NewGuid():N}{ext}";
-                    var filePath = Path.Combine(uploadsDir, uniqueFileName);
-
-                    using (var stream = new FileStream(filePath, FileMode.Create))
-                    {
-                        await imageFile.CopyToAsync(stream);
-                    }
-
-                    carDescription.Image = uniqueFileName;
+                    carDescription.Image = await ProcessImageUploadAsync(imageFile);
+                    ModelState.Remove(nameof(CarDescription.Image));
                 }
+            }
+            else if (!string.IsNullOrWhiteSpace(carDescription.Image))
+            {
+                ModelState.Remove(nameof(CarDescription.Image));
+            }
+            else
+            {
+                // Preserve existing vehicle image if no new file or URL was provided
+                carDescription.Image = existingVehicle.Image;
+                ModelState.Remove(nameof(CarDescription.Image));
             }
 
             if (ModelState.IsValid)
@@ -280,6 +274,7 @@ namespace ProjectPartB.Controllers
                 {
                     _context.Update(carDescription);
                     await _context.SaveChangesAsync();
+                    TempData["SuccessMessage"] = $"Vehicle {carDescription.Brand} {carDescription.Model} was successfully updated.";
                     return RedirectToAction(nameof(Index));
                 }
                 catch (DbUpdateConcurrencyException)
@@ -294,6 +289,56 @@ namespace ProjectPartB.Controllers
 
             ViewData["CarTypeId"] = new SelectList(categories, "Id", "Name", carDescription.CarTypeId);
             return View(carDescription);
+        }
+
+        private async Task<string> ProcessImageUploadAsync(IFormFile file)
+        {
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var uniqueFileName = $"{Guid.NewGuid():N}{ext}";
+
+            // Try saving physical file to wwwroot/uploads if writable
+            try
+            {
+                var webRoot = _webHostEnvironment.WebRootPath ?? Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                var uploadsDir = Path.Combine(webRoot, "uploads");
+                if (!Directory.Exists(uploadsDir))
+                {
+                    Directory.CreateDirectory(uploadsDir);
+                }
+                var filePath = Path.Combine(uploadsDir, uniqueFileName);
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+            }
+            catch
+            {
+                // Resilient fallback for serverless or read-only container volumes
+            }
+
+            // Convert to Base64 data URI for zero-dropout database storage across multi-instance serverless runtimes
+            using var memoryStream = new MemoryStream();
+            await file.CopyToAsync(memoryStream);
+            var bytes = memoryStream.ToArray();
+            var mimeType = ext switch
+            {
+                ".png" => "image/png",
+                ".webp" => "image/webp",
+                _ => "image/jpeg"
+            };
+            return $"data:{mimeType};base64,{Convert.ToBase64String(bytes)}";
+        }
+
+        private static string GetDefaultVehicleImage(string? categoryName)
+        {
+            return categoryName?.ToLowerInvariant() switch
+            {
+                "electric" => "https://images.unsplash.com/photo-1560958089-b8a1929cea89?auto=format&fit=crop&w=1200&q=80",
+                "suv" => "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&w=1200&q=80",
+                "luxury" => "https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=1200&q=80",
+                "people mover" or "van" => "https://images.unsplash.com/photo-1559297434-fae8a1916a79?auto=format&fit=crop&w=1200&q=80",
+                _ => "https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1200&q=80"
+            };
         }
 
         // GET: CarDescriptions/Delete/5

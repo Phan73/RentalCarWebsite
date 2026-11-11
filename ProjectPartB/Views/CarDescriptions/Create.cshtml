@@ -16,7 +16,7 @@
 
             <form asp-action="Create" enctype="multipart/form-data" method="post">
                 @Html.AntiForgeryToken()
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger mb-4"></div>
+                <div asp-validation-summary="All" class="alert alert-danger mb-4"></div>
 
                 <div class="row g-3">
                     <div class="col-md-6">
@@ -81,9 +81,21 @@
                         <span asp-validation-for="Color" class="text-danger small"></span>
                     </div>
 
-                    <div class="col-md-6">
-                        <label class="apex-form-label" for="imageFile">Vehicle Image (JPG, PNG, WEBP)</label>
-                        <input class="apex-form-control" id="imageFile" name="imageFile" type="file" accept=".jpg,.jpeg,.png,.webp" />
+                    <div class="col-12">
+                        <label class="apex-form-label">Vehicle Imagery</label>
+                        <div class="p-3 bg-light rounded border">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="apex-form-label mb-1" for="imageFile">Upload Photo File (JPG, PNG, WEBP)</label>
+                                    <input class="apex-form-control" id="imageFile" name="imageFile" type="file" accept=".jpg,.jpeg,.png,.webp" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="apex-form-label mb-1" asp-for="Image">Or Direct Photo URL (Optional)</label>
+                                    <input class="apex-form-control" asp-for="Image" placeholder="https://images.unsplash.com/..." />
+                                </div>
+                            </div>
+                            <small class="text-muted d-block mt-2">If left blank, an authentic professional photograph matched to the selected category will automatically be assigned.</small>
+                        </div>
                     </div>
 
                     <div class="col-12">

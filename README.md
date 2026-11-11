@@ -1,5 +1,6 @@
 # 🚗 Apex Car Rentals – Professional Automotive Booking Platform
 
+[![Vercel Deployment](https://img.shields.io/badge/Vercel-Live%20Production-000000?logo=vercel&logoColor=white)](https://rentalcarwebsite.vercel.app)
 [![.NET 8.0 LTS](https://img.shields.io/badge/.NET-8.0%20LTS-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/)
 [![ASP.NET Core MVC](https://img.shields.io/badge/ASP.NET%20Core-MVC%208.0-2b5797)](https://learn.microsoft.com/aspnet/core)
 [![Entity Framework Core](https://img.shields.io/badge/EF%20Core-8.0.11-68217a)](https://learn.microsoft.com/ef/core/)
@@ -7,7 +8,10 @@
 [![WCAG 2.2 AA](https://img.shields.io/badge/Accessibility-WCAG%202.2%20AA-00a896)](ProjectPartB/wwwroot/css/site.css)
 [![NZ Privacy Act 2020](https://img.shields.io/badge/Compliance-NZ%20Privacy%20Act%202020-0b132b)](ProjectPartB/Views/Home/Privacy.cshtml)
 
-A modern, production-ready car rental reservation platform built on **ASP.NET Core 8.0 LTS** and **Entity Framework Core 8.0**. Designed for high reliability, real-time concurrency-safe reservations, verified server-side pricing in New Zealand Dollars (**NZD**), role-based fleet operations, and a distinctive design system inspired by premium global mobility operators.
+> 🌐 **Live Production URL:** [**https://rentalcarwebsite.vercel.app**](https://rentalcarwebsite.vercel.app)  
+> 📦 **Vercel Project Dashboard:** [**https://vercel.com/zedkilltalon-2072/rentalcarwebsite**](https://vercel.com/zedkilltalon-2072/rentalcarwebsite)
+
+A modern, production-ready car rental reservation platform built on **ASP.NET Core 8.0 LTS** and **Entity Framework Core 8.0**. Designed for high reliability, real-time concurrency-safe reservations, verified server-side pricing in New Zealand Dollars (**NZD**), role-based fleet operations, and a distinctive design system inspired by premium global mobility operators. Hosted on Vercel via containerized Fluid Compute runtime.
 
 ---
 

@@ -119,7 +119,22 @@ dotnet ef database update --project ProjectPartB --context FS23_Group4_ProjectCo
 
 ## 5. Production Deployment Architectures
 
-### Architecture 1: Docker Containerization
+### Architecture 1: Vercel Container Runtime (Active Production)
+
+The application is live on Vercel using Vercel's OCI container runtime (`framework: "container"`):
+- **Live Production URL:** [https://rentalcarwebsite.vercel.app](https://rentalcarwebsite.vercel.app)
+- **Deployment Inspector:** [https://vercel.com/zedkilltalon-2072/rentalcarwebsite](https://vercel.com/zedkilltalon-2072/rentalcarwebsite)
+
+#### Setup & Deployment:
+1. `Dockerfile.vercel` & `Dockerfile` at the repository root build the .NET 8.0 application and run the optimized ASP.NET Core runtime.
+2. `vercel.json` configures `"framework": "container"`.
+3. `Program.cs` listens on the dynamic `$PORT` environment variable injected by Vercel.
+4. Deploy or update with:
+```bash
+npx vercel deploy --prod --yes
+```
+
+### Architecture 2: Standard Docker Containerization
 
 Create the following `Dockerfile` in the root of the repository:
 

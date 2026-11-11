@@ -57,7 +57,8 @@ public class CustomIdentityContext : IdentityDbContext<WebUser>
             Email = "administrator@example.com",
             NormalizedEmail = "ADMINISTRATOR@EXAMPLE.COM",
             EmailConfirmed = true,
-            SecurityStamp = Guid.NewGuid().ToString()
+            SecurityStamp = "f4c935d2-28e7-4f05-9b55-d143c7b2a001",
+            ConcurrencyStamp = "a1b2c3d4-e5f6-4a1b-8c2d-3e4f5a6b7c01"
         };
         admin.PasswordHash = passwordHasher.HashPassword(admin, "Password@123");
 
@@ -73,7 +74,8 @@ public class CustomIdentityContext : IdentityDbContext<WebUser>
             Email = "manager@example.com",
             NormalizedEmail = "MANAGER@EXAMPLE.COM",
             EmailConfirmed = true,
-            SecurityStamp = Guid.NewGuid().ToString()
+            SecurityStamp = "f4c935d2-28e7-4f05-9b55-d143c7b2a002",
+            ConcurrencyStamp = "a1b2c3d4-e5f6-4a1b-8c2d-3e4f5a6b7c02"
         };
         manager.PasswordHash = passwordHasher.HashPassword(manager, "Password@123");
 

@@ -220,5 +220,47 @@ namespace ProjectPartB.Tests
             var badRequest = Assert.IsType<BadRequestObjectResult>(actionResult);
             Assert.Equal(400, badRequest.StatusCode);
         }
+
+        [Fact]
+        public void DataProtection_CrossInstanceDecryptionSucceeds()
+        {
+            var masterKeyXml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<key id=""6cac850f-ac76-40ea-8c02-23f5afa16ed7"" version=""1"">
+  <creationDate>2026-11-11T00:00:00.0000000Z</creationDate>
+  <activationDate>2026-11-11T00:00:00.0000000Z</activationDate>
+  <expirationDate>2036-12-31T23:59:59.0000000Z</expirationDate>
+  <descriptor deserializerType=""Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel.AuthenticatedEncryptorDescriptorDeserializer, Microsoft.AspNetCore.DataProtection, Version=8.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60"">
+    <descriptor>
+      <encryption algorithm=""AES_256_CBC"" />
+      <validation algorithm=""HMACSHA256"" />
+      <masterKey p4:requiresEncryption=""true"" xmlns:p4=""http://schemas.asp.net/2015/03/dataProtection"">
+        <value>nDbEuP9p0oKbcyZIKmCVdfVHFqh26EE0SOHdoniLTCQjM2KQeIUDyUjSN8jiNbIYTCn0v6bKfWNmWu9WYIQKkg==</value>
+      </masterKey>
+    </descriptor>
+  </descriptor>
+</key>";
+
+            var dir1 = new DirectoryInfo(Path.Combine(Path.GetTempPath(), "dp_inst1_" + Guid.NewGuid()));
+            var dir2 = new DirectoryInfo(Path.Combine(Path.GetTempPath(), "dp_inst2_" + Guid.NewGuid()));
+            dir1.Create();
+            dir2.Create();
+            File.WriteAllText(Path.Combine(dir1.FullName, "key-6cac850f.xml"), masterKeyXml);
+            File.WriteAllText(Path.Combine(dir2.FullName, "key-6cac850f.xml"), masterKeyXml);
+
+            var provider1 = Microsoft.AspNetCore.DataProtection.DataProtectionProvider.Create(dir1);
+            var provider2 = Microsoft.AspNetCore.DataProtection.DataProtectionProvider.Create(dir2);
+
+            var protector1 = provider1.CreateProtector("IdentityCookiePurpose");
+            var protector2 = provider2.CreateProtector("IdentityCookiePurpose");
+
+            var payload = System.Text.Encoding.UTF8.GetBytes("AdminAuthTicketData");
+            var protectedByInstance1 = protector1.Protect(payload);
+
+            var decryptedByInstance2 = protector2.Unprotect(protectedByInstance1);
+            Assert.Equal("AdminAuthTicketData", System.Text.Encoding.UTF8.GetString(decryptedByInstance2));
+
+            Directory.Delete(dir1.FullName, true);
+            Directory.Delete(dir2.FullName, true);
+        }
     }
 }

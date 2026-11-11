@@ -1,6 +1,10 @@
 using System;
+using System.IO;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +18,37 @@ using ProjectPartB.Models;
 using ProjectPartB.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Cross-Instance Data Protection Key Persistence (Eliminates login dropouts across container restarts & multi-instance scaling)
+var keysDir = Path.Combine(Path.GetTempPath(), "rentalcar_dp_keys");
+if (!Directory.Exists(keysDir))
+{
+    Directory.CreateDirectory(keysDir);
+}
+var primaryKeyPath = Path.Combine(keysDir, "key-6cac850f-ac76-40ea-8c02-23f5afa16ed7.xml");
+if (!File.Exists(primaryKeyPath))
+{
+    const string masterKeyXml = @"<?xml version=""1.0"" encoding=""utf-8""?>
+<key id=""6cac850f-ac76-40ea-8c02-23f5afa16ed7"" version=""1"">
+  <creationDate>2026-11-11T00:00:00.0000000Z</creationDate>
+  <activationDate>2026-11-11T00:00:00.0000000Z</activationDate>
+  <expirationDate>2036-12-31T23:59:59.0000000Z</expirationDate>
+  <descriptor deserializerType=""Microsoft.AspNetCore.DataProtection.AuthenticatedEncryption.ConfigurationModel.AuthenticatedEncryptorDescriptorDeserializer, Microsoft.AspNetCore.DataProtection, Version=8.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60"">
+    <descriptor>
+      <encryption algorithm=""AES_256_CBC"" />
+      <validation algorithm=""HMACSHA256"" />
+      <masterKey p4:requiresEncryption=""true"" xmlns:p4=""http://schemas.asp.net/2015/03/dataProtection"">
+        <value>nDbEuP9p0oKbcyZIKmCVdfVHFqh26EE0SOHdoniLTCQjM2KQeIUDyUjSN8jiNbIYTCn0v6bKfWNmWu9WYIQKkg==</value>
+      </masterKey>
+    </descriptor>
+  </descriptor>
+</key>";
+    File.WriteAllText(primaryKeyPath, masterKeyXml);
+}
+
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(keysDir))
+    .SetApplicationName("RentalCarWebsite");
 
 // Support dynamic port injection (e.g. Vercel Container runtime $PORT)
 var port = Environment.GetEnvironmentVariable("PORT");
@@ -94,6 +129,43 @@ builder.Services.AddSession(options =>
     options.Cookie.SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Lax;
 });
 
+// Application Authentication Cookie Configuration (Persistent Login & Remember Me)
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.Name = ".ApexRentalCar.Auth";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.ExpireTimeSpan = TimeSpan.FromDays(30);
+    options.SlidingExpiration = true;
+    options.LoginPath = "/Identity/Account/Login";
+    options.AccessDeniedPath = "/Identity/Account/AccessDenied";
+    options.ReturnUrlParameter = "returnUrl";
+});
+
+builder.Services.Configure<SecurityStampValidatorOptions>(options =>
+{
+    options.ValidationInterval = TimeSpan.FromHours(24);
+});
+
+// Antiforgery Cookie Configuration
+builder.Services.AddAntiforgery(options =>
+{
+    options.Cookie.Name = ".ApexRentalCar.Antiforgery";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+});
+
+// Forwarded Headers for Cloud/Reverse Proxy Environments (Vercel, Docker)
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
+
 // Role-Based Authorization Policies
 builder.Services.AddAuthorization(options =>
 {
@@ -126,6 +198,8 @@ using (var scope = app.Services.CreateScope())
 }
 
 // HTTP Request Pipeline
+app.UseForwardedHeaders();
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");

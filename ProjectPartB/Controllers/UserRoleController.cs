@@ -15,11 +15,16 @@ namespace ProjectPartB.Controllers
     {
         private readonly UserManager<WebUser> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly SignInManager<WebUser> _signInManager;
 
-        public UserRolesController(UserManager<WebUser> userManager, RoleManager<IdentityRole> roleManager)
+        public UserRolesController(
+            UserManager<WebUser> userManager,
+            RoleManager<IdentityRole> roleManager,
+            SignInManager<WebUser> signInManager)
         {
             _userManager = userManager;
             _roleManager = roleManager;
+            _signInManager = signInManager;
         }
 
         // GET: UserRoles
@@ -170,6 +175,14 @@ namespace ProjectPartB.Controllers
 
             if (result.Succeeded)
             {
+                // If the logged in administrator assigned/modified their own role, refresh their sign-in cookie
+                // so the updated security stamp and claims match without signing them out.
+                var currentUserId = _userManager.GetUserId(User);
+                if (currentUserId == user.Id)
+                {
+                    await _signInManager.RefreshSignInAsync(user);
+                }
+
                 return RedirectToAction(nameof(Users));
             }
 

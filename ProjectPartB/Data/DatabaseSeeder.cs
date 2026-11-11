@@ -99,7 +99,9 @@ namespace ProjectPartB.Data
                     Address = "100 Queen Street, Auckland CBD",
                     Phone = "+64 9 300 1234",
                     DrivingLicense = "DL-NZ-982341",
-                    EmailConfirmed = true
+                    EmailConfirmed = true,
+                    SecurityStamp = "f4c935d2-28e7-4f05-9b55-d143c7b2a003",
+                    ConcurrencyStamp = "a1b2c3d4-e5f6-4a1b-8c2d-3e4f5a6b7c03"
                 };
 
                 var createRes = await userManager.CreateAsync(adminUser, "P@ssword2026!");
@@ -107,6 +109,39 @@ namespace ProjectPartB.Data
                 {
                     await userManager.AddToRoleAsync(adminUser, "Administrator");
                     await userManager.AddToRoleAsync(adminUser, "Manager");
+                }
+            }
+
+            var legacyAdminEmail = "administrator@example.com";
+            var existingLegacyAdmin = await userManager.FindByEmailAsync(legacyAdminEmail);
+            if (existingLegacyAdmin == null)
+            {
+                var legacyAdmin = new WebUser
+                {
+                    Id = "u1-admin-user",
+                    UserName = legacyAdminEmail,
+                    Email = legacyAdminEmail,
+                    FullName = "Apex Operations Lead",
+                    Address = "100 Queen Street, Auckland CBD",
+                    Phone = "+64 9 300 1234",
+                    DrivingLicense = "DL-NZ-982341",
+                    EmailConfirmed = true,
+                    SecurityStamp = "f4c935d2-28e7-4f05-9b55-d143c7b2a001",
+                    ConcurrencyStamp = "a1b2c3d4-e5f6-4a1b-8c2d-3e4f5a6b7c01"
+                };
+
+                var createRes = await userManager.CreateAsync(legacyAdmin, "Password@123");
+                if (createRes.Succeeded)
+                {
+                    await userManager.AddToRoleAsync(legacyAdmin, "Administrator");
+                    await userManager.AddToRoleAsync(legacyAdmin, "Manager");
+                }
+            }
+            else
+            {
+                if (!await userManager.IsInRoleAsync(existingLegacyAdmin, "Administrator"))
+                {
+                    await userManager.AddToRoleAsync(existingLegacyAdmin, "Administrator");
                 }
             }
 

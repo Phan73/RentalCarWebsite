@@ -4,6 +4,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 using ProjectPartB.Areas.Identity.Data;
 using ProjectPartB.Models;
 
@@ -17,9 +19,62 @@ namespace ProjectPartB.Data
             RoleManager<IdentityRole> roleManager,
             UserManager<WebUser> userManager)
         {
-            // Ensure database schemas exist
-            await projectContext.Database.EnsureCreatedAsync();
-            await identityContext.Database.EnsureCreatedAsync();
+            // Ensure database schemas exist for both contexts without conflicting
+            var identityCreator = identityContext.Database.GetService<IDatabaseCreator>() as RelationalDatabaseCreator;
+            var projectCreator = projectContext.Database.GetService<IDatabaseCreator>() as RelationalDatabaseCreator;
+
+            if (identityCreator != null && !await identityCreator.ExistsAsync())
+            {
+                await identityCreator.CreateAsync();
+            }
+
+            // 1. Ensure Identity schemas exist
+            bool identityTablesExist = false;
+            try
+            {
+                identityTablesExist = await identityContext.Roles.AnyAsync() || true;
+            }
+            catch
+            {
+                identityTablesExist = false;
+            }
+
+            if (!identityTablesExist && identityCreator != null)
+            {
+                try
+                {
+                    await identityCreator.CreateTablesAsync();
+                }
+                catch
+                {
+                    var script = identityContext.Database.GenerateCreateScript();
+                    await ExecuteScriptSafelyAsync(identityContext.Database, script);
+                }
+            }
+
+            // 2. Ensure Project schemas exist
+            bool projectTablesExist = false;
+            try
+            {
+                projectTablesExist = await projectContext.CarDescriptions.AnyAsync() || true;
+            }
+            catch
+            {
+                projectTablesExist = false;
+            }
+
+            if (!projectTablesExist && projectCreator != null)
+            {
+                try
+                {
+                    await projectCreator.CreateTablesAsync();
+                }
+                catch
+                {
+                    var script = projectContext.Database.GenerateCreateScript();
+                    await ExecuteScriptSafelyAsync(projectContext.Database, script);
+                }
+            }
 
             // 1. Seed Roles
             string[] roles = { "Administrator", "Manager", "Staff", "Customer", "Visitor", "Editor" };
@@ -334,6 +389,33 @@ namespace ProjectPartB.Data
 
                     projectContext.Bookings.Add(sampleBooking);
                     await projectContext.SaveChangesAsync();
+                }
+            }
+        }
+
+        private static async Task ExecuteScriptSafelyAsync(DatabaseFacade database, string script)
+        {
+            var isSqlite = database.IsSqlite();
+            if (isSqlite)
+            {
+                script = script.Replace("CREATE TABLE ", "CREATE TABLE IF NOT EXISTS ");
+                script = script.Replace("CREATE UNIQUE INDEX ", "CREATE UNIQUE INDEX IF NOT EXISTS ");
+                script = script.Replace("CREATE INDEX ", "CREATE INDEX IF NOT EXISTS ");
+            }
+
+            var statements = script.Split(new[] { ";\r\n", ";\n" }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var stmt in statements)
+            {
+                var trimmed = stmt.Trim();
+                if (string.IsNullOrWhiteSpace(trimmed)) continue;
+
+                try
+                {
+                    await database.ExecuteSqlRawAsync(trimmed + ";");
+                }
+                catch
+                {
+                    // Ignore errors if object already exists
                 }
             }
         }

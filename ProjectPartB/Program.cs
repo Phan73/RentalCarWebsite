@@ -15,15 +15,25 @@ using ProjectPartB.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Support dynamic port injection (e.g. Vercel Container runtime $PORT)
+var port = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(port))
+{
+    builder.WebHost.UseUrls($"http://*:{port}");
+}
+
 // Configuration & Connection Strings
 var configuration = builder.Configuration;
 var defaultConn = configuration.GetConnectionString("DefaultConnection");
 bool useSqlite = configuration.GetValue<bool>("UseSqlite") ||
-                 (defaultConn != null && defaultConn.Contains(".db", StringComparison.OrdinalIgnoreCase));
+                 (defaultConn != null && defaultConn.Contains(".db", StringComparison.OrdinalIgnoreCase)) ||
+                 string.IsNullOrEmpty(defaultConn);
 
-if (useSqlite || string.IsNullOrEmpty(defaultConn))
+if (useSqlite)
 {
-    var sqliteConn = configuration.GetConnectionString("SqliteConnection") ?? "Data Source=RentalCarWebsite.db";
+    var sqliteConn = configuration.GetConnectionString("SqliteConnection") 
+                     ?? (defaultConn != null && defaultConn.Contains(".db", StringComparison.OrdinalIgnoreCase) ? defaultConn : null)
+                     ?? "Data Source=RentalCarWebsite.db";
     builder.Services.AddDbContext<CustomIdentityContext>(options =>
         options.UseSqlite(sqliteConn));
     builder.Services.AddDbContext<FS23_Group4_ProjectContext>(options =>

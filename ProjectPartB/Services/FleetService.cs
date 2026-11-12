@@ -69,8 +69,13 @@ namespace ProjectPartB.Services
             // Availability by date range:
             if (filter.PickupDateTime.HasValue && filter.ReturnDateTime.HasValue && filter.ReturnDateTime > filter.PickupDateTime)
             {
-                var pDate = filter.PickupDateTime.Value;
-                var rDate = filter.ReturnDateTime.Value;
+                var pDate = filter.PickupDateTime.Value.Kind == DateTimeKind.Unspecified
+                    ? DateTime.SpecifyKind(filter.PickupDateTime.Value, DateTimeKind.Utc)
+                    : filter.PickupDateTime.Value.ToUniversalTime();
+
+                var rDate = filter.ReturnDateTime.Value.Kind == DateTimeKind.Unspecified
+                    ? DateTime.SpecifyKind(filter.ReturnDateTime.Value, DateTimeKind.Utc)
+                    : filter.ReturnDateTime.Value.ToUniversalTime();
 
                 // Find car IDs that have active overlapping bookings
                 var bookedCarIds = await _context.Bookings

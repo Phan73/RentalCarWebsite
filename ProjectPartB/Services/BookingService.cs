@@ -34,11 +34,14 @@ namespace ProjectPartB.Services
 
             // Interval overlap check:
             // Existing booking overlaps if ExistingPickup < RequestedReturn AND ExistingReturn > RequestedPickup
+            var pDate = pickup.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(pickup, DateTimeKind.Utc) : pickup.ToUniversalTime();
+            var rDate = returnDate.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(returnDate, DateTimeKind.Utc) : returnDate.ToUniversalTime();
+
             var query = _context.Bookings
                 .Where(b => b.CarDescriptionId == carDescriptionId
                          && b.Status != BookingStatus.Cancelled
-                         && b.PickupDateTime < returnDate
-                         && b.ReturnDateTime > pickup);
+                         && b.PickupDateTime < rDate
+                         && b.ReturnDateTime > pDate);
 
             if (excludeBookingId.HasValue)
             {
@@ -147,8 +150,12 @@ namespace ProjectPartB.Services
                     CarDescriptionId = request.CarDescriptionId,
                     PickupLocationId = request.PickupLocationId,
                     ReturnLocationId = request.ReturnLocationId,
-                    PickupDateTime = request.PickupDateTime,
-                    ReturnDateTime = request.ReturnDateTime,
+                    PickupDateTime = request.PickupDateTime.Kind == DateTimeKind.Unspecified
+                        ? DateTime.SpecifyKind(request.PickupDateTime, DateTimeKind.Utc)
+                        : request.PickupDateTime.ToUniversalTime(),
+                    ReturnDateTime = request.ReturnDateTime.Kind == DateTimeKind.Unspecified
+                        ? DateTime.SpecifyKind(request.ReturnDateTime, DateTimeKind.Utc)
+                        : request.ReturnDateTime.ToUniversalTime(),
                     RentalDays = pricing.RentalDays,
                     DailyRate = pricing.DailyRate,
                     DurationDiscountPercent = pricing.DurationDiscountPercent,

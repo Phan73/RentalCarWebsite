@@ -17,6 +17,9 @@ using ProjectPartB.Data;
 using ProjectPartB.Models;
 using ProjectPartB.Services;
 
+// Support DateTime binding with Npgsql PostgreSQL timestamps
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Cross-Instance Data Protection Key Persistence (Eliminates login dropouts across container restarts & multi-instance scaling)

@@ -442,5 +442,50 @@ namespace ProjectPartB.Tests
             var roles = await roleMgr.Roles.ToListAsync();
             Assert.Contains(roles, r => r.Name == "Administrator");
         }
+
+        [Fact]
+        public async Task Npgsql_FleetServiceSearchWithDates_ThrowsOrSucceeds()
+        {
+            var host = "ep-lively-truth-a7r3b1ao-pooler.ap-southeast-2.aws.neon.tech";
+            var user = "neondb_owner";
+            var pass = "npg_XDQWtP9k8gJz";
+            var db = "neondb";
+
+            var connStr = new Npgsql.NpgsqlConnectionStringBuilder
+            {
+                Host = host,
+                Database = db,
+                Username = user,
+                Password = pass,
+                SslMode = Npgsql.SslMode.Require,
+                Pooling = true,
+                Timeout = 20
+            }.ConnectionString;
+
+            var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
+            services.AddDbContext<FS23_Group4_ProjectContext>(options =>
+                options.UseNpgsql(connStr));
+            var sp = services.BuildServiceProvider();
+            using var scope = sp.CreateScope();
+            var projectCtx = scope.ServiceProvider.GetRequiredService<FS23_Group4_ProjectContext>();
+            var fleetService = new FleetService(projectCtx);
+
+            var filter = new VehicleSearchFilter
+            {
+                PickupDateTime = DateTime.Parse("2026-11-13T10:00"),
+                ReturnDateTime = DateTime.Parse("2026-11-18T10:00")
+            };
+
+            var result = await fleetService.SearchVehiclesAsync(filter);
+            Assert.NotNull(result);
+            Assert.NotEmpty(result.Vehicles);
+
+            var bookingService = new BookingService(projectCtx, new PricingService());
+            var available = await bookingService.IsVehicleAvailableAsync(
+                result.Vehicles.First().CarDescriptionId,
+                DateTime.Parse("2026-11-13T10:00"),
+                DateTime.Parse("2026-11-18T10:00"));
+            Assert.True(available);
+        }
     }
 }
